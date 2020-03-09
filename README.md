@@ -6,7 +6,7 @@ Installation
 
 1. Checkout the repository and create a build directory
 ```
-git clone https://eicweb.phy.anl.gov/containers/eic_containers.git
+git clone https://eicweb.phy.anl.gov/containers/eic_container.git
 cd eic_containers && mkdir BUILD && cd BUILD
 ```
 
