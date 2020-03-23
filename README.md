@@ -13,7 +13,11 @@ cd eic_containers && mkdir BUILD && cd BUILD
 2. Configure the install for your environment, providing the appropriate `prefix` and
    `module_dir` you want to use.
 ```
-cmake .. -DCMAKE_INSTALL_PREFIX=<prefix> -DINSTALL_MODULE_DIR=<module_dir>
+cmake ../. -DCMAKE_INSTALL_PREFIX=$HOME/stow/development
+```
+or
+```
+cmake ../. -DCMAKE_INSTALL_PREFIX=<prefix> -DINSTALL_MODULE_DIR=<module_dir>
 ```
 
 3. Download the container and install.
