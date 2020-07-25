@@ -12,12 +12,12 @@ cd eic_container
 
 2. Run the deploy script `deploy.py` to install to your `<PREFIX>` of choice 
    (e.g. $HOME/local/opt/eic_container_1.0.4). By default the
-   modelefile will be installed to `$PREFIX/../../etc/modulefiles`. 
+   modeuefile will be installed to `$PREFIX/../../etc/modulefiles`. 
    You can use the `-v` flag to select the version you want to deploy, or omit the 
    flag if you want to install the master build. The recommended stable 
-   release version is `v2.0.1`.
+   release version is `v2.0.2`.
 ```bash
-./deploy.py -v 2.0.1 <PREFIX>
+./deploy.py -v 2.0.2 <PREFIX>
 ```
 
    Available flags:
@@ -41,8 +41,13 @@ cd eic_container
 module load eic_container
 ```
 
-4. To use the container in local mode, you can run the runscripts (under `$PREFIX/bin`)
-   manually.
+4. To use the container in local mode, you can deploy the container with the `-l` flag,
+   and then use the runscripts (under `$PREFIX/bin`) manually.
+```bash
+./deploy.py $PREFIX -l
+...
+$PREFIX/bin/eic-shell
+```
 
 4. (Advanced) If you need to add additional bind directives for the internal singularity container,
    you can add them with the `-b` flag. Run `./deploy.py -h` to see a list of all
@@ -82,9 +87,10 @@ $PREFIX/bin/eic-shell
 
 ### C. Using the docker container for your CI purposes
 
-1. To load the container environment in your run scripts, you can 
-   - launch the script or program using `eic-shell`,
-   - or `source /etc/eic-env.sh` at the start of your commands.
+1. To load the container environment in your run scripts, you have to do nothing special.  
+   The environment is already setup with good defaults, so you can use all the programs 
+   in the container as usual and assume everything needed to run the included software 
+   is already setup.  
 
 2. If using this container as a basis for a new container, you can direction access 
    the full container environment from a docker `RUN` shell command with no further
@@ -92,3 +98,30 @@ $PREFIX/bin/eic-shell
    `/opt/view` to fully integrate with the existing environment. Depending on your
    use case, installation to `/usr/local` may also work, but this might require you
    to write and run additional environment scripts.
+
+Included software:
+------------------
+  - Included software:
+    - gcc@9.3.0
+    - cmake@3.17.3
+    - fmt@6.1.2
+    - spdlog@1.5.0
+    - nlohmann-json
+    - heppdt@3.04.01
+    - clhep@2.4.1.3
+    - eigen@3.3.7
+    - python@3.7.7 with pip, numpy, pyyaml, matplotlib, ipython, scipy
+    - xrootd@4.12.3
+    - root@6.22.00
+    - pythia8@8244
+    - hepmc3@3.2.2 +python +rootio
+    - podio@0.10.0
+    - geant4@10.6.2
+    - dd4hep@1.13.0
+    - acts@0.27.1
+    - gaudi@33.2
+    - NPDet development version
+  - The singularity build exports the following applications:
+    - eic_shell: a development shell in the image
+    - root
+    - ipython
