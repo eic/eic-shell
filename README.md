@@ -15,9 +15,9 @@ cd eic_container
    modeuefile will be installed to `$PREFIX/../../etc/modulefiles`. 
    You can use the `-v` flag to select the version you want to deploy, or omit the 
    flag if you want to install the master build. The recommended stable 
-   release version is `v2.0.2`.
+   release version is `v2.0.3`.
 ```bash
-./deploy.py -v 2.0.2 <PREFIX>
+./deploy.py -v 2.0.3 <PREFIX>
 ```
 
    Available flags:
@@ -95,9 +95,8 @@ $PREFIX/bin/eic-shell
 2. If using this container as a basis for a new container, you can direction access 
    the full container environment from a docker `RUN` shell command with no further
    action needed. For the most optimal experience, you can install your software to
-   `/opt/view` to fully integrate with the existing environment. Depending on your
-   use case, installation to `/usr/local` may also work, but this might require you
-   to write and run additional environment scripts.
+   `/usr/local` to fully integrate with the existing environment. (Note that, internally,
+   `/usr/local` is a symlink to `/opt/view`).
 
 Included software:
 ------------------
