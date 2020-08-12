@@ -15,9 +15,9 @@ cd eic_container
    modeuefile will be installed to `$PREFIX/../../etc/modulefiles`. 
    You can use the `-v` flag to select the version you want to deploy, or omit the 
    flag if you want to install the master build. The recommended stable 
-   release version is `v2.1.0`.
+   release version is `v2.1.2`.
 ```bash
-./deploy.py -v 2.1.0 <PREFIX>
+./deploy.py -v 2.1.2 <PREFIX>
 ```
 
    Available flags:
@@ -114,12 +114,13 @@ Included software:
     - root@6.22.00
     - pythia8@8244
     - hepmc3@3.2.2 +python +rootio
-    - podio@0.11.0
+    - podio@master
     - geant4@10.6.2
     - dd4hep@1.13.1
-    - acts@0.29.0
+    - acts@0.30.0
     - gaudi@33.2
     - NPDet development version
+    - EICD development version
   - The singularity build exports the following applications:
     - eic_shell: a development shell in the image
     - container_dev: same as EIC shell
