@@ -119,8 +119,6 @@ Included software:
     - dd4hep@1.13.1
     - acts@0.30.0
     - gaudi@33.2
-    - NPDet development version
-    - EICD development version
   - The singularity build exports the following applications:
     - eic_shell: a development shell in the image
     - container_dev: same as EIC shell
