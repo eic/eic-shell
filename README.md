@@ -124,5 +124,4 @@ Included software:
   - The singularity build exports the following applications:
     - eic_shell: a development shell in the image
     - container_dev: same as EIC shell
-    - root
     - ipython
