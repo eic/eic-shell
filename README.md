@@ -15,9 +15,9 @@ cd eic_container
    modeuefile will be installed to `$PREFIX/../../etc/modulefiles`. 
    You can use the `-v` flag to select the version you want to deploy, or omit the 
    flag if you want to install the master build. The recommended stable 
-   release version is `v2.3.0`.
+   release version is `v2.3.1`.
 ```bash
-./deploy.py -v 2.3.0 <PREFIX>
+./deploy.py -v 2.3.1 <PREFIX>
 ```
 
    Available flags:
