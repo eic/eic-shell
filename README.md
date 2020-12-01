@@ -15,9 +15,9 @@ cd eic_container
    modeuefile will be installed to `$PREFIX/../../etc/modulefiles`. 
    You can use the `-v` flag to select the version you want to deploy, or omit the 
    flag if you want to install the master build. The recommended stable 
-   release version is `v2.3.1`.
+   release version is `v2.4.0`.
 ```bash
-./deploy.py -v 2.3.1 <PREFIX>
+./deploy.py -v 2.4.0 <PREFIX>
 ```
 
    Available flags:
@@ -102,23 +102,24 @@ Included software:
 ------------------
   - Included software:
     - gcc@10.2.0
-    - cmake@3.18.1
-    - fmt@6.1.2
+    - cmake@3.18.4
+    - fmt@7.1.2
     - spdlog@1.5.0
     - nlohmann-json
     - heppdt@3.04.01
     - clhep@2.4.1.3
-    - eigen@3.3.7
-    - python@3.7.8 with pip, numpy, pyyaml, pyafp,  matplotlib, ipython, scipy
+    - eigen@3.3.8
+    - python@3.8.6 with pip, numpy, pyyaml, pyafp,  matplotlib, ipython, scipy
     - xrootd@4.12.3
     - root@6.22.00
-    - pythia8@8244
+    - pythia8@8303
     - hepmc3@3.2.2 +python +rootio
+    - stow@2.3.1
     - podio@master
     - geant4@10.6.2
     - dd4hep@1.14.1
-    - acts@1.02.0
-    - gaudi@34.0
+    - acts@2.00.0
+    - gaudi@35.0
     - dawn@3.91a
     - dawncut@1.54a
   - The singularity build exports the following applications:
