@@ -15,6 +15,7 @@ Authors:
 
 import os
 import argparse
+import re
 import urllib.request
 from install import make_launcher, make_modulefile
 from install.util import smart_mkdir, project_version, InvalidArgumentError
@@ -30,7 +31,7 @@ PROGRAMS = ['eic-shell',
             'ipython']
 
 ## URL for the current container (git tag will be filled in by the script)
-CONTAINER_URL = r'https://eicweb.phy.anl.gov/api/v4/projects/290/jobs/artifacts/{version}/raw/build/{img}.sif?job=release:singularity'
+CONTAINER_URL = r'https://eicweb.phy.anl.gov/api/v4/projects/290/jobs/artifacts/{version}/raw/build/{img}.sif?job=singularity'
 #api/v4/projects/1/jobs/artifacts/master/raw/some/release/file.pdf
 
 ## Singularity bind directive
@@ -89,14 +90,34 @@ if __name__ == "__main__":
                 raise InvalidArgumentError()
         bind_directive = ' '.join([BIND_DIRECTIVE.format(path) for path in args.bind_paths])
 
-    ## We want to slightly modify our version specifier: if it leads with a 'v' drop the v
-    ## for everything installed, but ensure we have the leading v as well where needed
-    version = '{}'.format(args.version)
-    vversion = '{}'.format(args.version)
-    if version[0] == 'v':
-        version = version[1:]
-    if vversion[0].isdigit():
-        vversion= 'v{}'.format(args.version)
+    ## Naming schemes:
+    ## We need to deduce both the correct git branch and an appropriate
+    ## local version number from the desired version number
+    ## by default we use whatever version number is given in VERSION, but we want
+    ## to allow users to specify either X.Y.Z or vX.Y.Z for versions (same for stable
+    ## branches).
+    ## 
+    ## Policy:
+    ## numbered releases: (v)X.Y.Z --> git vX.Y.Z and local X.Y.Z
+    ## stable branches: (v)X.Y-stable --> git vX.Y-stable and local X.Y-stable
+    ## master branch: latest/master --> git master and local stable
+    ## for other branches --> git <BRANCH> and local unstable
+
+    version_local = None
+    version_repo = None
+    if args.version in ('master', 'latest'):
+        version_local = 'latest'
+        version_repo = 'master'
+    elif re.search('[0-9]+\.[0-9]+\.[0-9]|[0-9]+\.[0-9]-stable', args.version) is not None:
+        version_local = args.version
+        version_repo = args.version
+        if version_local[0] == 'v':
+            version_local = version_local[1:]
+        if version_repo[0].isdigit():
+            version_repo = 'v{}'.format(args.version)
+    else:
+        version_local = 'unstable'
+        version_repo = args.version
 
     ## Create our install prefix if needed and ensure it is writable
     args.prefix = os.path.abspath(args.prefix)
@@ -125,10 +146,10 @@ if __name__ == "__main__":
     ## Builder SIF is not built anymore, deprecated
     #if args.builder:
         #img += "_builder"
-    container = '{}/{}.sif.{}'.format(libdir, img, version)
+    container = '{}/{}.sif.{}'.format(libdir, img, version_local)
     if not os.path.exists(container) or args.force:
         url = CONTAINER_URL.format(group=GROUP_NAME, project=PROJECT_NAME,
-                version=vversion, img=img)
+                version=version_repo, img=img)
         print('Downloading container from:', url)
         print('Destination:', container)
         urllib.request.urlretrieve(url, container)
@@ -137,7 +158,7 @@ if __name__ == "__main__":
         print(' ---> run with -f to force a re-download')
 
     if not args.local:
-        make_modulefile(PROJECT_NAME, version, moduledir, bindir)
+        make_modulefile(PROJECT_NAME, version_local, moduledir, bindir)
 
     ## configure the application launchers
     print('Configuring applications launchers: ')
