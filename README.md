@@ -111,11 +111,11 @@ Included software:
     - eigen@3.3.8
     - python@3.7.8 with pip, numpy, pyyaml, pyafp,  matplotlib, ipython, scipy
     - xrootd@4.12.3
-    - root@6.22.00
+    - root@6.22.06
     - pythia8@8303
     - hepmc3@3.2.2 +python +rootio
     - stow@2.3.1
-    - podio@master
+    - podio@0.13
     - geant4@10.6.2
     - dd4hep@1.14.1
     - acts@1.00.0
