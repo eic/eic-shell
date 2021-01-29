@@ -15,9 +15,9 @@ cd eic_container
    modeuefile will be installed to `$PREFIX/../../etc/modulefiles`. 
    You can use the `-v` flag to select the version you want to install, or omit the 
    flag if you want to install the master build. The recommended stable 
-   release version is `v2.5.0`.
+   release version is `v2.6.1`.
 ```bash
-./install.py -v 2.5.0 <PREFIX>
+./install.py -v 2.6.1 <PREFIX>
 ```
 
    Available flags:
@@ -122,6 +122,7 @@ Included software:
     - gaudi@34.0
     - dawn@3.91a
     - dawncut@1.54a
+    - opencascade
   - The singularity build exports the following applications:
     - eic_shell: a development shell in the image
     - container_dev: same as EIC shell
