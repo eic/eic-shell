@@ -101,24 +101,24 @@ $PREFIX/bin/eic-shell
 Included software:
 ------------------
   - Included software:
-    - gcc@10.2.0
-    - cmake@3.18.4
+    - gcc@10.2.1
+    - cmake@3.20.0
     - fmt@7.1.2
-    - spdlog@1.5.0
+    - spdlog@1.8.1
     - nlohmann-json
     - heppdt@3.04.01
-    - clhep@2.4.1.3
-    - eigen@3.3.8
+    - clhep@2.4.4.0
+    - eigen@3.3.9
     - python@3.7.8 with pip, numpy, pyyaml, pyafp,  matplotlib, ipython, scipy
-    - xrootd@4.12.3
-    - root@6.22.06
+    - xrootd@5.1.0
+    - root@6.22.08
     - pythia8@8303
     - hepmc3@3.2.2 +python +rootio
     - stow@2.3.1
     - podio@0.13
-    - geant4@10.6.2
-    - dd4hep@1.14.1
-    - acts@1.00.0
+    - geant4@10.7.1
+    - dd4hep@1.16.1
+    - acts@5.00.0
     - gaudi@34.0
     - dawn@3.91a
     - dawncut@1.54a
