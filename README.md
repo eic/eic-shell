@@ -22,18 +22,17 @@ cd eic_container
 
    Available flags:
 ```bash
-  -v VERSION, --version VERSION 
-                        (opt.) project version. Default: current version (in repo).
+  -c CONTAINER, --container CONTAINER
+                        (opt.) Container to install. D: eic (will migrate to jug_xl for v3.0).
+  -v VERSION, --version VERSION
+                        (opt.) project version. D: 2.9.2. For MRs, use mr-XXX.
+  -f, --force           Force-overwrite already downloaded container
   -b BIND_PATHS, --bind-path BIND_PATHS
                         (opt.) extra bind paths for singularity.
   -m MODULE_PATH, --module-path MODULE_PATH
-                        (opt.) Root module path where you want to install a
-                        modulefile. D: <prefix>/../../etc/modulefiles
-  -l, --local           Local install, will not install the modulefiles (you will have
-                        to run the launcher scripts from their relative paths).
-  -f, --force           Force-overwrite already downloaded container with the same name.
+                        (opt.) Root module path to install a modulefile. D: Do not install a
+                        modulefile
 ```
-
 
 3. To use the container in installed mode, you can load the modulefile, 
    and then use the included apps as if they are native apps on your system!
