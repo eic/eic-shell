@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CONTAINER=jug_xl
-VERSION=3.0.0
+VERSION=3.0.1
 
 ## Simple setup script that installs the container
 ## in your local environment under $PWD/local/lib
