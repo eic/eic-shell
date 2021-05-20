@@ -1,6 +1,30 @@
 EIC software container
 ============================================
 
+Simple Installation
+------------
+1. Create a local directory that you want to work in, e.g `$HOME/eic`, and go into this
+   directory.
+```bash
+mkdir $HOME/eic
+cd $HOME/eic
+```
+
+2. Execute the following line in your terminal to setup your environment in this directory
+   to install the latest stable container
+```bash
+curl https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.sh | bash
+```
+
+3. You can now load your development environment by executing the `eic-shell` script that
+   is in your top-level working directory.
+```bash
+eic-shell
+```
+
+4. Within your development environment (`eic-shell`), you can install software to the
+   internal `$ATHENA_PREFIX`
+
 Installation
 ------------
 
@@ -15,17 +39,17 @@ cd eic_container
    modeuefile will be installed to `$PREFIX/../../etc/modulefiles`. 
    You can use the `-v` flag to select the version you want to install, or omit the 
    flag if you want to install the master build. The recommended stable 
-   release version is `v2.9.2`.
+   release version is `v3.0.0`.
 ```bash
-./install.py -v 2.9.2 <PREFIX>
+./install.py -v 3.0.0 <PREFIX>
 ```
 
    Available flags:
 ```bash
   -c CONTAINER, --container CONTAINER
-                        (opt.) Container to install. D: eic (will migrate to jug_xl for v3.0).
+                        (opt.) Container to install. D: jug_xl (also available: jug_dev, and legacy eic container).
   -v VERSION, --version VERSION
-                        (opt.) project version. D: 2.9.2. For MRs, use mr-XXX.
+                        (opt.) project version. D: 3.0.0. For MRs, use mr-XXX.
   -f, --force           Force-overwrite already downloaded container
   -b BIND_PATHS, --bind-path BIND_PATHS
                         (opt.) extra bind paths for singularity.
@@ -40,7 +64,7 @@ cd eic_container
 module load eic_container
 ```
 
-4. To use the container in local mode, you can install the container with the `-l` flag,
+4. To use the container in local mode, you can install the container without the `-m`  flag,
    and then use the runscripts (under `$PREFIX/bin`) manually.
 ```bash
 ./install.py $PREFIX -l
@@ -124,6 +148,4 @@ Included software:
     - opencascade
     - madx@5.06.1
   - The singularity build exports the following applications:
-    - eic_shell: a development shell in the image
-    - container_dev: same as EIC shell
-    - ipython
+    - eic-shell: a development shell in the image

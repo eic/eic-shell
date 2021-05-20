@@ -177,7 +177,7 @@ if __name__ == "__main__":
             dest='container',
             default=DEFAULT_IMG,
             help='(opt.) Container to install. '
-                 'D: {} (will migrate to jug_xl for v3.0).'.format(DEFAULT_IMG))
+                 'D: {} (also available: jug_dev, and legacy "eic" container).')
     parser.add_argument(
             '-v', '--version',
             dest='version',
