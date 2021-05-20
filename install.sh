@@ -15,6 +15,8 @@ VERSION=3.0.0
 wget https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.py
 chmod +x install.py
 ./install.py -c $CONTAINER -v $VERSION $PWD/local
+## ensure the container is executable
+chmod +x $PWD/local/lib/${CONTAINER}.sif.${VERSION}
 ## Don't place eic-shell in local/bin as this may
 ## conflict with things we install inside the container
 rm $PWD/local/bin/eic-shell
