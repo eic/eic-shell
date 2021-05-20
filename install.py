@@ -20,7 +20,7 @@ import urllib.request
 
 ## Gitlab group and project/program name. 
 DEFAULT_IMG='jug_xl'
-DEFAULT_VERSION='3.0.0'
+DEFAULT_VERSION='3.0.1'
 
 SHORTCUTS = ['eic-shell']
 
