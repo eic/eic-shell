@@ -39,9 +39,9 @@ cd eic_container
    modeuefile will be installed to `$PREFIX/../../etc/modulefiles`. 
    You can use the `-v` flag to select the version you want to install, or omit the 
    flag if you want to install the master build. The recommended stable 
-   release version is `v3.0.0`.
+   release version is `v3.0.1`.
 ```bash
-./install.py -v 3.0.0 <PREFIX>
+./install.py -v 3.0.1 <PREFIX>
 ```
 
    Available flags:
@@ -49,7 +49,7 @@ cd eic_container
   -c CONTAINER, --container CONTAINER
                         (opt.) Container to install. D: jug_xl (also available: jug_dev, and legacy eic container).
   -v VERSION, --version VERSION
-                        (opt.) project version. D: 3.0.0. For MRs, use mr-XXX.
+                        (opt.) project version. D: 3.0.1. For MRs, use mr-XXX.
   -f, --force           Force-overwrite already downloaded container
   -b BIND_PATHS, --bind-path BIND_PATHS
                         (opt.) extra bind paths for singularity.
