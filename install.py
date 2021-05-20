@@ -32,7 +32,7 @@ SHORTCUTS = ['eic-shell']
 ##      - nightly    --> just use fallback singularity pull
 ##  - {img}: image name
 ##  - {job}: the CI job that built the artifact
-CONTAINER_URL = r'hhttps://eicweb.phy.anl.gov/api/v4/projects/290/jobs/artifacts/{ref}/raw/build/{img}.sif?job={job}'
+CONTAINER_URL = r'https://eicweb.phy.anl.gov/api/v4/projects/290/jobs/artifacts/{ref}/raw/build/{img}.sif?job={job}'
 
 ## Docker ref is used as fallback in case regular artifact download fails
 ## The components are:
