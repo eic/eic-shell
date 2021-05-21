@@ -14,19 +14,30 @@ echo "Setting up development environment for eicweb/$CONTAINER:$VERSION"
 
 mkdir -p local/lib || exit 1
 
+SINGULARITY=
 ## check for a singularity install
-## jlab singularity
-if [ -d "/apps/singularity/3.7.1/bin/" ]; then
-  SINGULARITY="/apps/singularity/3.7.1/bin/singularity"
-## cvmfs singularity
-elif [ -f "/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity" ]; then
-  SINGULARITY="/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity"
-## whatever is in the path
-elif [ $(type -P singularity ) ]; then
+## default singularity if new enough
+if [ $(type -P singularity ) ]; then
   SINGULARITY=$(which singularity)
-else
-  echo "ERROR: no singularity found, please make sure you have singularity in your \$PATH"
-  exit 1
+  SINGULARITY_VERSION=`$SINGULARITY --version`
+  if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
+    ## too old, look for something else
+    SINGULARITY=
+  fi
+fi
+if [ -z $SINGULARITY ]; then
+  if [ -d "/apps/singularity/3.7.1/bin/" ]; then
+    SINGULARITY="/apps/singularity/3.7.1/bin/singularity"
+  ## cvmfs singularity
+  elif [ -f "/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity" ]; then
+    SINGULARITY="/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity"
+  ## whatever is in the path
+  elif [ $(type -P singularity ) ]; then
+    SINGULARITY=$(which singularity)
+  else
+    echo "ERROR: no singularity found, please make sure you have singularity in your \$PATH"
+    exit 1
+  fi
 fi
 echo " - Found singularity at $SINGULARITY"
 
@@ -39,12 +50,13 @@ if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
   echo "WARNING: your singularity version $SINGULARITY_VERSION is ancient, we strongly recommend using version 3.x"
   echo "We will attempt to use a fall-back SIMG image to be used with this singularity version"
   if [ -f /gpfs02/eic/athena/jug_xl-3.0-stable.simg ]; then
-    ln -df /gpfs02/eic/athena/jug_xl-3.0-stable.simg local/lib
+    ln -sf /gpfs02/eic/athena/jug_xl-3.0-stable.simg local/lib
     SIF="$PWD/local/lib/jug_xl-3.0-stable.simg"
   else
     echo "Attempting last-resort singularity pull for old image"
     echo "This may take a few minutes..."
-    singularity pull docker://eicweb/$CONTAINER:$VERSION
+    SIF="$PWD/local/lib/jug_xl-3.0-stable.simg"
+    singularity pull --name "$SIF" docker://eicweb/$CONTAINER:$VERSION
   fi
 ## we are in sane territory, yay!
 else
@@ -78,11 +90,23 @@ fi
 
 ## create a new top-level eic-shell launcher script
 ## that sets the ATHENA_PREFIX and then starts singularity
+## need different script for old singularity versions
+if [ ${SINGULARITY_VERSION:0:1} != 2 ]; then
+## newer singularity
 cat << EOF > eic-shell
 #!/bin/bash
 export ATHENA_PREFIX=$PWD/local
 $SINGULARITY run $SIF
 EOF
+else
+## ancient singularity
+cat << EOF > eic-shell
+#!/bin/bash
+export ATHENA_PREFIX=$PWD/local
+$SINGULARITY exec $SIF bash
+EOF
+fi
+
 chmod +x eic-shell
 
 echo " - Created custom eic-shell excecutable"
