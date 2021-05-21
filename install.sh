@@ -105,7 +105,7 @@ else
 cat << EOF > eic-shell
 #!/bin/bash
 export ATHENA_PREFIX=$PWD/local
-$SINGULARITY exec $SIF bash
+$SINGULARITY exec $SIF eic-shell
 EOF
 fi
 
