@@ -26,14 +26,16 @@ if [ $(type -P singularity ) ]; then
   fi
 fi
 if [ -z $SINGULARITY ]; then
+  ## first priority: a known good install (this one is on JLAB)
   if [ -d "/apps/singularity/3.7.1/bin/" ]; then
     SINGULARITY="/apps/singularity/3.7.1/bin/singularity"
-  ## cvmfs singularity
-  elif [ -f "/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity" ]; then
-    SINGULARITY="/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity"
-  ## whatever is in the path
+  ## whatever is in the path is next
   elif [ $(type -P singularity ) ]; then
     SINGULARITY=$(which singularity)
+  ## cvmfs singularity is last resort (sandbox mode can cause issues)
+  elif [ -f "/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity" ]; then
+    SINGULARITY="/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity"
+  ## not good...
   else
     echo "ERROR: no singularity found, please make sure you have singularity in your \$PATH"
     exit 1
