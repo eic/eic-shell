@@ -3,6 +3,8 @@
 CONTAINER="jug_xl"
 VERSION="3.0-stable"
 
+echo "Setting up development environment for eicweb/$CONTAINER:$VERSION"
+
 ## Simple setup script that installs the container
 ## in your local environment under $PWD/local/lib
 ## and creates a simple top-level launcher script
@@ -28,7 +30,7 @@ else
     exit 1
   fi
 fi
-echo "Found singularity at $SINGULARITY"
+echo " - Found singularity at $SINGULARITY"
 
 SIF=
 ## check if we can just use cvmfs for the image
@@ -52,7 +54,7 @@ fi
 if [ -z $SIF -o ! -f $SIF ]; then
   echo "ERROR: no singularity image found"
 else
-  echo "Using ${CONTAINER} image: $SIF"
+  echo " - Deployed ${CONTAINER} image: $SIF"
 fi
 
 ## create a new top-level eic-shell launcher script
@@ -64,4 +66,6 @@ $SINGULARITY run $SIF
 EOF
 chmod +x eic-shell
 
-echo "Created custom eic-shell excecutable"
+echo " - Created custom eic-shell excecutable"
+echo "Environment setup succesfull"
+echo "You can start the development environment by running './eic-shell'"
