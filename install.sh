@@ -63,9 +63,9 @@ if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
 ## we are in sane territory, yay!
 else
   ## check if we can just use cvmfs for the image
-  if [ -f /cvmfs/eic.opensciencegrid.org/singularity/athena/jug_xl_v${VERSION}.sif ]; then
-    ln -sf /cvmfs/eic.opensciencegrid.org/singularity/athena/jug_xl_v${VERSION}.sif local/lib
-    SIF="$PWD/local/lib/jug_xl_v${VERSION}.sif"
+  if [ -d /cvmfs/singularity.opensciencegrid.org/eicweb/jug_xl:${VERSION} ]; then
+    ln -sf /cvmfs/singularity.opensciencegrid.org/eicweb/jug_xl:${VERSION} local/lib
+    SIF="$PWD/local/lib/jug_xl:${VERSION}"
   elif [ -f /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/jug_xl_v3.0-stable.sif ]; then
     ln -sf /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/jug_xl_v3.0-stable.sif local/lib
     SIF="$PWD/local/lib/jug_xl_v${VERSION}.sif"
