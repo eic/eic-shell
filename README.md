@@ -25,90 +25,18 @@ eic-shell
 4. Within your development environment (`eic-shell`), you can install software to the
    internal `$ATHENA_PREFIX`
 
-Installation
-------------
+Using the docker container for your CI purposes
+-----------------------------------------------
 
-1. Clone the repository and go into the directory
-```bash
-git clone https://eicweb.phy.anl.gov/containers/eic_container.git
-cd eic_container
-```
-
-2. Run the install script `install.py` to install to your `<PREFIX>` of choice 
-   (e.g. $HOME/local/opt/eic_container_1.0.4). By default the
-   modeuefile will be installed to `$PREFIX/../../etc/modulefiles`. 
-   You can use the `-v` flag to select the version you want to install, or omit the 
-   flag if you want to install the master build. The recommended stable 
-   release version is `v3.0.1`.
-```bash
-./install.py -v 3.0.1 <PREFIX>
-```
-
-   Available flags:
-```bash
-  -c CONTAINER, --container CONTAINER
-                        (opt.) Container to install. D: jug_xl (also available: jug_dev, and legacy eic container).
-  -v VERSION, --version VERSION
-                        (opt.) project version. D: 3.0.1. For MRs, use mr-XXX.
-  -f, --force           Force-overwrite already downloaded container
-  -b BIND_PATHS, --bind-path BIND_PATHS
-                        (opt.) extra bind paths for singularity.
-  -m MODULE_PATH, --module-path MODULE_PATH
-                        (opt.) Root module path to install a modulefile. D: Do not install a
-                        modulefile
-```
-
-3. To use the container in installed mode, you can load the modulefile, 
-   and then use the included apps as if they are native apps on your system!
-```bash
-module load eic_container
-```
-
-4. To use the container in local mode, you can install the container without the `-m`  flag,
-   and then use the runscripts (under `$PREFIX/bin`) manually.
-```bash
-./install.py $PREFIX -l
-...
-$PREFIX/bin/eic-shell
-```
-
-4. (Advanced) If you need to add additional bind directives for the internal singularity container,
-   you can add them with the `-b` flag. Run `./install.py -h` to see a list of all
-   supported options.
-
-Usage
------
-
-### A. Running the singularity development environment with modulefiles
-
-1. Add the installed modulefile to your module path, e.g.,
-```bash
-module use <prefix>/../../etc/modulefiles
-```
-
-2. Load the eic container
-```bash
-module load eic_container
-```
-
-3. To start a shell in the container environment, do
-```bash
-eic-shell
-```
-
-### B. Running the singularity development locally (without modulefiles)
-
-1. This is assuming you installed with the `-l` flag to a prefix `$PREFIX`:
-```bash
-./install.py $PREFIX
-```
-
-2. To start a shell in the container environment, do
-```bash
-$PREFIX/bin/eic-shell
-```
-
-### C. Using the docker container for your CI purposes
+The docker containers are publicly accessible from
+[Dockerhub](https://hub.docker.com/u/eicweb). You probably want to use the default
+`jug_xl` container. Relevant versions are:
+ - `eicweb/jug_xl:nightly`: nightly release, with latest detector and reconstruction
+   version. This is probably what you want to use unless you are dispatching a large
+   simulation/reconstruciton job
+ - `eicweb/jug_xl:3.0-stable`: latest stable release, what you want to use for large
+   simulation jobs (for reproducibility). Please coordinate with the software group to
+   ensure all desired software changes are present in this container.
 
 1. To load the container environment in your run scripts, you have to do nothing special.  
    The environment is already setup with good defaults, so you can use all the programs 

@@ -1,16 +1,63 @@
 #!/bin/bash
 
 CONTAINER="jug_xl"
-VERSION="3.0-stable"
+VERSION="nightly"
+PREFIX="$PWD"
+
+function print_the_help {
+  echo "USAGE:  ./install.sh [-p PREFIX] [-v VERSION]"
+  echo "OPTIONAL ARGUMENTS:"
+  echo "          -p,--prefix     Working directory to deploy the environment (D: $PREFIX)"
+  echo "          -v,--version    Version to install (D: $VERSION)"
+  echo "          -h,--help       Print this message"
+  echo ""
+  echo "  Set up containerized development environment."
+  echo ""
+  echo "EXAMPLE: ./install.sh" 
+  exit
+}
+
+while [ $# -gt 0 ]; do
+  key=$1
+  case $key in
+    -p|--prefix)
+      PREFIX=$2
+      shift
+      shift
+      ;;
+    -v|--version)
+      VERSION=$2
+      shift
+      shift
+      ;;
+    -h|--help)
+      print_the_help
+      exit 0
+      ;;
+    *)
+      echo "ERROR: unknown argument: $key"
+      echo "use --help for more info"
+      exit 1
+      ;;
+  esac
+done
+
+mkdir -p $PREFIX || exit 1
+
+if [ ! -d $PREFIX ]; then
+  echo "ERROR: not a valid directory: $PREFIX"
+  echo "use --help for more info"
+  exit 1
+fi
 
 echo "Setting up development environment for eicweb/$CONTAINER:$VERSION"
 
 ## Simple setup script that installs the container
-## in your local environment under $PWD/local/lib
+## in your local environment under $PREFIX/local/lib
 ## and creates a simple top-level launcher script
 ## that launches the container for this working directory
 ## with the $ATHENA_PREFIX variable pointing
-## to the $PWD/local directory
+## to the $PREFIX/local directory
 
 mkdir -p local/lib || exit 1
 
@@ -53,11 +100,11 @@ if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
   echo "We will attempt to use a fall-back SIMG image to be used with this singularity version"
   if [ -f /gpfs02/eic/athena/jug_xl-3.0-stable.simg ]; then
     ln -sf /gpfs02/eic/athena/jug_xl-3.0-stable.simg local/lib
-    SIF="$PWD/local/lib/jug_xl-3.0-stable.simg"
+    SIF="$PREFIX/local/lib/jug_xl-3.0-stable.simg"
   else
     echo "Attempting last-resort singularity pull for old image"
     echo "This may take a few minutes..."
-    SIF="$PWD/local/lib/jug_xl-3.0-stable.simg"
+    SIF="$PREFIX/local/lib/jug_xl-3.0-stable.simg"
     singularity pull --name "$SIF" docker://eicweb/$CONTAINER:$VERSION
   fi
 ## we are in sane territory, yay!
@@ -65,22 +112,22 @@ else
   ## check if we can just use cvmfs for the image
   if [ -d /cvmfs/singularity.opensciencegrid.org/eicweb/jug_xl:${VERSION} ]; then
     ln -sf /cvmfs/singularity.opensciencegrid.org/eicweb/jug_xl:${VERSION} local/lib
-    SIF="$PWD/local/lib/jug_xl:${VERSION}"
+    SIF="$PREFIX/local/lib/jug_xl:${VERSION}"
   elif [ -f /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/jug_xl_v3.0-stable.sif ]; then
     ln -sf /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/jug_xl_v3.0-stable.sif local/lib
-    SIF="$PWD/local/lib/jug_xl_v${VERSION}.sif"
+    SIF="$PREFIX/local/lib/jug_xl_v${VERSION}.sif"
   ## if not, download the container to the system
   else
     ## get the python installer and run the old-style install
     wget https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.py
     chmod +x install.py
-    ./install.py -c $CONTAINER -v $VERSION $PWD/local
+    ./install.py -f -c $CONTAINER -v $VERSION $PREFIX/local
     ## Don't place eic-shell in local/bin as this may
     ## conflict with things we install inside the container
-    rm $PWD/local/bin/eic-shell
+    rm $PREFIX/local/bin/eic-shell
     ## Cleanup
     rm -rf __pycache__ install.py
-    SIF=$PWD/local/lib/${CONTAINER}.sif.${VERSION}
+    SIF=$PREFIX/local/lib/${CONTAINER}.sif.${VERSION}
   fi
 fi
 
@@ -90,6 +137,20 @@ else
   echo " - Deployed ${CONTAINER} image: $SIF"
 fi
 
+## We want to make sure the root directory of the install directory
+## is always bound. We also check for the existence of a few standard
+## locations (/scratch /volatile /cache) and bind those too if found
+echo " - Determining additional bind paths"
+PREFIX_ROOT="/$(realpath $PREFIX | cut -d "/" -f2)"
+BINDPATH=$PREFIX_ROOT
+echo "   --> $PREFIX_ROOT"
+for dir in /work /scratch /volatile /cache; do
+  if [ -d $dir ]; then
+    echo "   --> $dir"
+    BINDPATH="${BINDPATH},$dir"
+  fi
+done
+
 ## create a new top-level eic-shell launcher script
 ## that sets the ATHENA_PREFIX and then starts singularity
 ## need different script for old singularity versions
@@ -97,14 +158,16 @@ if [ ${SINGULARITY_VERSION:0:1} != 2 ]; then
 ## newer singularity
 cat << EOF > eic-shell
 #!/bin/bash
-export ATHENA_PREFIX=$PWD/local
+export ATHENA_PREFIX=$PREFIX/local
+export SINGULARITY_BINDPATH=$BINDPATH
 $SINGULARITY run $SIF
 EOF
 else
 ## ancient singularity
 cat << EOF > eic-shell
 #!/bin/bash
-export ATHENA_PREFIX=$PWD/local
+export ATHENA_PREFIX=$PREFIX/local
+export SINGULARITY_BINDPATH=$BINDPATH
 $SINGULARITY exec $SIF eic-shell
 EOF
 fi
