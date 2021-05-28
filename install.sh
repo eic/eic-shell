@@ -131,7 +131,7 @@ else
   fi
 fi
 
-if [ -z $SIF -o ! -f $SIF ]; then
+if [ -z $SIF -o ! -f $SIF -o ! -d $SIF ]; then
   echo "ERROR: no singularity image found"
 else
   echo " - Deployed ${CONTAINER} image: $SIF"
