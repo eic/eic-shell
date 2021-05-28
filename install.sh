@@ -98,41 +98,50 @@ SIF=
 if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
   echo "WARNING: your singularity version $SINGULARITY_VERSION is ancient, we strongly recommend using version 3.x"
   echo "We will attempt to use a fall-back SIMG image to be used with this singularity version"
-  if [ -f /gpfs02/eic/athena/jug_xl-3.0-stable.simg ]; then
-    ln -sf /gpfs02/eic/athena/jug_xl-3.0-stable.simg local/lib
-    SIF="$PREFIX/local/lib/jug_xl-3.0-stable.simg"
+  if [ -f /gpfs02/eic/athena/${CONTAINER}-${VERSION}.simg ]; then
+    ln -sf /gpfs02/eic/athena/${CONTAINER}-${VERSION}.simg local/lib
+    SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.simg"
   else
     echo "Attempting last-resort singularity pull for old image"
     echo "This may take a few minutes..."
-    SIF="$PREFIX/local/lib/jug_xl-3.0-stable.simg"
+    SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.simg"
     singularity pull --name "$SIF" docker://eicweb/$CONTAINER:$VERSION
+    mv `basename $SIF` $SIF
   fi
 ## we are in sane territory, yay!
 else
   ## check if we can just use cvmfs for the image
-  if [ -d /cvmfs/singularity.opensciencegrid.org/eicweb/jug_xl:${VERSION} ]; then
-    ln -sf /cvmfs/singularity.opensciencegrid.org/eicweb/jug_xl:${VERSION} local/lib
-    SIF="$PREFIX/local/lib/jug_xl:${VERSION}"
-  elif [ -f /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/jug_xl_v3.0-stable.sif ]; then
-    ln -sf /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/jug_xl_v3.0-stable.sif local/lib
-    SIF="$PREFIX/local/lib/jug_xl_v${VERSION}.sif"
+  if [ -d /cvmfs/singularity.opensciencegrid.org/eicweb/${CONTAINER}:${VERSION} ]; then
+    ln -sf /cvmfs/singularity.opensciencegrid.org/eicweb/${CONTAINER}:${VERSION} local/lib
+    SIF="$PREFIX/local/lib/${CONTAINER}:${VERSION}"
+  elif [ -f /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_${VERSION}.sif ]; then
+    ln -sf /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_${VERSION}.sif local/lib
+    SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.sif"
+  elif [ -f /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ]; then
+    ln -sf /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif local/lib
+    SIF="$PREFIX/local/lib/${CONTAINER}-v${VERSION}.sif"
   ## if not, download the container to the system
   else
     ## get the python installer and run the old-style install
+    ## work in temp directory
+    tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
+    pushd $tmp_dir
     wget https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.py
     chmod +x install.py
-    ./install.py -f -c $CONTAINER -v $VERSION $PREFIX/local
-    ## Don't place eic-shell in local/bin as this may
-    ## conflict with things we install inside the container
-    rm $PREFIX/local/bin/eic-shell
-    ## Cleanup
-    rm -rf __pycache__ install.py
-    SIF=$PREFIX/local/lib/${CONTAINER}.sif.${VERSION}
+    ./install.py -f -c $CONTAINER -v $VERSION .
+    INSIF=`ls lib/$CONTAINER.sif.* | head -n1`
+    SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.sif"
+    mv $INSIF $SIF
+    ## cleanup
+    popd
+    rm -rf $tmp_dir
   fi
 fi
 
-if [ -z $SIF -o ! -f $SIF -o ! -d $SIF ]; then
+echo $SIF
+if [ -z $SIF ]; then
   echo "ERROR: no singularity image found"
+  exit 1
 else
   echo " - Deployed ${CONTAINER} image: $SIF"
 fi
