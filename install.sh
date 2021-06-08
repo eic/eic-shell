@@ -162,24 +162,12 @@ done
 
 ## create a new top-level eic-shell launcher script
 ## that sets the ATHENA_PREFIX and then starts singularity
-## need different script for old singularity versions
-if [ ${SINGULARITY_VERSION:0:1} != 2 ]; then
-## newer singularity
-cat << EOF > eic-shell
-#!/bin/bash
-export ATHENA_PREFIX=$PREFIX/local
-export SINGULARITY_BINDPATH=$BINDPATH
-$SINGULARITY run $SIF
-EOF
-else
-## ancient singularity
 cat << EOF > eic-shell
 #!/bin/bash
 export ATHENA_PREFIX=$PREFIX/local
 export SINGULARITY_BINDPATH=$BINDPATH
 $SINGULARITY exec $SIF eic-shell
 EOF
-fi
 
 chmod +x eic-shell
 
