@@ -287,7 +287,7 @@ if __name__ == "__main__":
     ## Builder SIF is not built anymore, deprecated
     #if args.builder:
         #img += "_builder"
-    container = '{}/{}.sif.{}'.format(libdir, img, version_docker)
+    container = '{}/{}-{}.sif'.format(libdir, img, version_docker)
     if not os.path.exists(container) or args.force:
         url = CONTAINER_URL.format(ref=version_gitlab, img=img, job=build_job)
         print('Downloading container from:', url)

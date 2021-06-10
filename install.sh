@@ -96,30 +96,34 @@ echo " - Found singularity at $SINGULARITY"
 SINGULARITY_VERSION=`$SINGULARITY --version`
 SIF=
 if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
+  SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.simg"
+
   echo "WARNING: your singularity version $SINGULARITY_VERSION is ancient, we strongly recommend using version 3.x"
   echo "We will attempt to use a fall-back SIMG image to be used with this singularity version"
   if [ -f /gpfs02/eic/athena/${CONTAINER}-${VERSION}.simg ]; then
-    ln -sf /gpfs02/eic/athena/${CONTAINER}-${VERSION}.simg local/lib
-    SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.simg"
+    ln -sf /gpfs02/eic/athena/${CONTAINER}-${VERSION}.simg ${SIF}
   else
     echo "Attempting last-resort singularity pull for old image"
     echo "This may take a few minutes..."
-    SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.simg"
-    singularity pull --name "$SIF" docker://eicweb/$CONTAINER:$VERSION
-    mv `basename $SIF` $SIF
+    INSIF=`basename ${SIF}`
+    singularity pull --name "${INSIF}" docker://eicweb/$CONTAINER:$VERSION
+    mv ${INSIF} $SIF
+    chmod +x ${SIF}
+    unset INSIF
   fi
 ## we are in sane territory, yay!
 else
   ## check if we can just use cvmfs for the image
+  SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.sif"
   if [ -d /cvmfs/singularity.opensciencegrid.org/eicweb/${CONTAINER}:${VERSION} ]; then
-    ln -sf /cvmfs/singularity.opensciencegrid.org/eicweb/${CONTAINER}:${VERSION} local/lib
-    SIF="$PREFIX/local/lib/${CONTAINER}:${VERSION}"
-  elif [ -f /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_${VERSION}.sif ]; then
-    ln -sf /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_${VERSION}.sif local/lib
-    SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.sif"
+    SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}"
+    ## need to cleanup in this case, else it will try to make a subdirectory
+    rm -rf ${SIF}
+    ln -sf /cvmfs/singularity.opensciencegrid.org/eicweb/${CONTAINER}:${VERSION} ${SIF}
+  elif [ -f /cvmfs/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ]; then
+    ln -sf /cvmfs/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ${SIF}
   elif [ -f /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ]; then
-    ln -sf /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif local/lib
-    SIF="$PREFIX/local/lib/${CONTAINER}-v${VERSION}.sif"
+    ln -sf /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ${SIF}
   ## if not, download the container to the system
   else
     ## get the python installer and run the old-style install
@@ -129,17 +133,19 @@ else
     wget https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.py
     chmod +x install.py
     ./install.py -f -c $CONTAINER -v $VERSION .
-    INSIF=`ls lib/$CONTAINER.sif.* | head -n1`
-    SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.sif"
+    INSIF=lib/`basename ${SIF}`
     mv $INSIF $SIF
+    chmod +x ${SIF}
     ## cleanup
     popd
     rm -rf $tmp_dir
+    unset INSIF
   fi
 fi
 
 echo $SIF
-if [ -z $SIF ]; then
+ls $SIF 2>&1 > /dev/null && GOOD_SIF=1 
+if [ -z "$SIF" -o -z "$GOOD_SIF" ]; then
   echo "ERROR: no singularity image found"
   exit 1
 else

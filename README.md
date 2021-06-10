@@ -25,6 +25,20 @@ eic-shell
 4. Within your development environment (`eic-shell`), you can install software to the
    internal `$ATHENA_PREFIX`
 
+Singularity Container Dowload for Development Usage
+-------------
+**Note: this container download script is meant for expert usage. If it is unclear to you
+why you would want to do this, you are probably looking for the single installation
+above.**
+To download the `jug_dev:testing` base image, do
+```bash
+curl https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/download_dev.sh | bash
+```
+To download the `jug_xl:nightly` image, do
+```bash
+curl https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/download_dev.sh | bash -s -- -c jug_xl -v nightly
+```
+
 Using the docker container for your CI purposes
 -----------------------------------------------
 
