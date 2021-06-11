@@ -124,6 +124,9 @@ else
     ln -sf /cvmfs/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ${SIF}
   elif [ -f /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ]; then
     ln -sf /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ${SIF}
+  ## check if we have an internal CI image we will use for testing purposes
+  elif [ -f $PWD/.gitlab-ci/${CONTAINER}-${VERSION}.sif ]; then
+    ln -sf $PWD/.gitlab-ci/${CONTAINER}-${VERSION}.sif ${SIF}
   ## if not, download the container to the system
   else
     ## get the python installer and run the old-style install
