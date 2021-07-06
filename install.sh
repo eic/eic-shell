@@ -8,6 +8,8 @@ function print_the_help {
   echo "USAGE:  ./install.sh [-p PREFIX] [-v VERSION]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -p,--prefix     Working directory to deploy the environment (D: $PREFIX)"
+  echo "          -t,--tmpdir     Change tmp directory (D: $([[ -z "$TMPDIR" ]] && echo "/tmp" || echo "$TMPDIR"))"
+  echo "          -n,--no-cvmfs   Disable check for local CVMFS (D: enabled)"
   echo "          -v,--version    Version to install (D: $VERSION)"
   echo "          -h,--help       Print this message"
   echo ""
@@ -23,6 +25,16 @@ while [ $# -gt 0 ]; do
     -p|--prefix)
       PREFIX=$2
       shift
+      shift
+      ;;
+    -t|--tmpdir)
+      export TMPDIR=$2
+      export SINGULARITY_TMPDIR=$2
+      shift
+      shift
+      ;;
+    -n|--no-cvmfs)
+      DISABLE_CVMFS_USAGE=true
       shift
       ;;
     -v|--version)
@@ -115,7 +127,7 @@ if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
 else
   ## check if we can just use cvmfs for the image
   SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.sif"
-  if [ -d /cvmfs/singularity.opensciencegrid.org/eicweb/${CONTAINER}:${VERSION} ]; then
+  if [ -z "$DISABLE_CVMFS_USAGE" -a -d /cvmfs/singularity.opensciencegrid.org/eicweb/${CONTAINER}:${VERSION} ]; then
     SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}"
     ## need to cleanup in this case, else it will try to make a subdirectory
     rm -rf ${SIF}
