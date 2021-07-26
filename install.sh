@@ -185,6 +185,78 @@ done
 ## that sets the ATHENA_PREFIX and then starts singularity
 cat << EOF > eic-shell
 #!/bin/bash
+
+## capture environment setup for upgrades
+CONTAINER=$CONTAINER
+TMPDIR=$TMPDIR
+VERSION=$VERSION
+PREFIX=$PREFIX
+DISABLE_CVMFS_USAGE=${DISABLE_CVMFS_USAGE}
+
+function print_the_help {
+  echo "USAGE:  ./eic-shell [OPTIONS]"
+  echo "OPTIONAL ARGUMENTS:"
+  echo "          -u,--upgrade    Upgrade the container to the latest version"
+  echo "          -n,--no-cvmfs   Disable check for local CVMFS when updating. (D: enabled)"
+  echo "          -h,--help       Print this message"
+  echo ""
+  echo "  Start the eic-shell containerized software environment."
+  echo ""
+  echo "EXAMPLE: ./eic-shell" 
+  exit
+}
+
+UPGRADE=
+
+while [ \$# -gt 0 ]; do
+  key=\$1
+  case \$key in
+    -u|--upgrade)
+      UPGRADE=1
+      shift
+      ;;
+    -n|--no-cvmfs)
+      DISABLE_CVMFS_USAGE=true
+      shift
+      ;;
+    -h|--help)
+      print_the_help
+      exit 0
+      ;;
+    *)
+      echo "ERROR: unknown argument: \$key"
+      echo "use --help for more info"
+      exit 1
+      ;;
+  esac
+done
+
+if [ ! -z \${UPGRADE} ]; then
+  echo "Upgrading eic-shell..."
+  if [ -z "\$DISABLE_CVMFS_USAGE" -a -d /cvmfs/singularity.opensciencegrid.org/eicweb/\${CONTAINER}:\${VERSION} ]; then
+    echo ""
+    echo "Note: You cannot manually update the container as you are using the CVMFS version."
+    echo "      The container will automatically update every 24 hours."
+    echo "      You can override this by setting the '--no-cvmfs' flag, which will"
+    echo "      instantiate a local version."
+    echo "      This is only recommended for expert usage."
+    echo ""
+    echo "Exiting without upgrade"
+    exit 0
+  fi
+  FLAGS="-p \${PREFIX} -v \${VERSION}"
+  if [ ! -z \${TMPDIR} ]; then
+    FLAGS="\${FLAGS} -t \${TMPDIR}"
+  fi
+  if [ ! -z \${DISABLE_CVMFS_USAGE} ]; then
+    FLAGS="\${FLAGS} --no-cvmfs"
+  fi
+  curl https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.sh \
+    | bash -s -- \${FLAGS}
+  echo "eic-shell upgrade sucessful"
+  exit 0
+fi
+
 export ATHENA_PREFIX=$PREFIX/local
 export SINGULARITY_BINDPATH=$BINDPATH
 $SINGULARITY exec $SIF eic-shell
