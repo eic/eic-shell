@@ -194,7 +194,7 @@ PREFIX=$PREFIX
 DISABLE_CVMFS_USAGE=${DISABLE_CVMFS_USAGE}
 
 function print_the_help {
-  echo "USAGE:  ./eic-shell [OPTIONS]"
+  echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade    Upgrade the container to the latest version"
   echo "          -n,--no-cvmfs   Disable check for local CVMFS when updating. (D: enabled)"
@@ -202,7 +202,11 @@ function print_the_help {
   echo ""
   echo "  Start the eic-shell containerized software environment."
   echo ""
-  echo "EXAMPLE: ./eic-shell" 
+  echo "EXAMPLES: "
+  echo "  - Start an interactive shell: ./eic-shell" 
+  echo "  - Upgrade the container:      ./eic-shell --upgrade"
+  echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
+  echo ""
   exit
 }
 
@@ -222,6 +226,10 @@ while [ \$# -gt 0 ]; do
     -h|--help)
       print_the_help
       exit 0
+      ;;
+    --)
+      shift
+      break
       ;;
     *)
       echo "ERROR: unknown argument: \$key"
@@ -259,7 +267,7 @@ fi
 
 export ATHENA_PREFIX=$PREFIX/local
 export SINGULARITY_BINDPATH=$BINDPATH
-$SINGULARITY exec $SIF eic-shell
+$SINGULARITY exec $SIF eic-shell \$@
 EOF
 
 chmod +x eic-shell
