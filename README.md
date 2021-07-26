@@ -67,27 +67,39 @@ Included software:
 ------------------
   - Included software:
     - gcc@10.2.1
-    - cmake@3.20.0
-    - fmt@7.1.2
-    - spdlog@1.8.1
-    - nlohmann-json
-    - heppdt@3.04.01
-    - clhep@2.4.4.0
-    - eigen@3.3.9
-    - python@3.7.8 with pip, numpy, pyyaml, pyafp,  matplotlib, ipython, scipy
-    - xrootd@5.1.0
-    - root@6.22.08
-    - pythia8@8303
-    - hepmc3@3.2.2 +python +rootio
-    - stow@2.3.1
-    - podio@0.13
-    - geant4@10.7.1
-    - dd4hep@1.16.1
-    - acts@8.01.0
-    - gaudi@34.0
-    - dawn@3.91a
-    - dawncut@1.54a
-    - opencascade
     - madx@5.06.1
+    - cmake@3.20.0
+    - fmt@7.1.2 cxxstd=17
+    - spdlog@1.8.1
+    - nlohmann-json@3.9.1
+    - heppdt@3.04.01
+    - clhep@2.4.4.0 cxxstd=17
+    - eigen@3.3.9
+    - python@3.7.8
+    - py-numpy@1.20.1
+    - py-pip@20.2
+    - pkg-config@0.29.2
+    - xrootd@5.1.0 cxxstd=17 +python
+    - root@6.22.08 cxxstd=17 
+          +fftw +fortran +gdml +http +mlp +pythia8 
+          +root7 +tmva +vc +xrootd +ssl 
+          ^mesa swr=none +opengl -llvm -osmesa
+    - pythia8@8303 +fastjet
+    - fastjet@3.3.3
+    - hepmc3@3.2.2 +python +rootio 
+    - stow@2.3.1
+    - cairo@1.16.0 +fc+ft+X+pdf+gobject
+    - podio@0.13.1
+    - geant4@10.7.1 cxxstd=17 +opengl +vecgeom +x11 +qt +threads ^qt +opengl
+    - dd4hep@1.17 +geant4 +assimp +hepmc3 +ipo +lcio
+    - acts@8.03.0p1 +dd4hep +digitization +identification +json +tgeo +ipo
+    - genfit@2.00.00
+    - gaudi@36.0
+    - dawn@3_91a
+    - dawncut@1_54a
+    - opencascade@7.4.0p1
+    - emacs@27.0:27.99 toolkit=athena
+    - imagemagick@7.0.0:7.0.99
+    - igprof@5.9.16
   - The singularity build exports the following applications:
     - eic-shell: a development shell in the image
