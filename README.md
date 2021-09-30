@@ -65,41 +65,41 @@ The docker containers are publicly accessible from
 
 Included software:
 ------------------
-  - Included software:
-    - gcc@10.2.1
-    - madx@5.06.1
-    - cmake@3.20.0
-    - fmt@7.1.2 cxxstd=17
-    - spdlog@1.8.1
-    - nlohmann-json@3.9.1
-    - heppdt@3.04.01
-    - clhep@2.4.4.0 cxxstd=17
-    - eigen@3.3.9
-    - python@3.7.8
-    - py-numpy@1.20.1
-    - py-pip@20.2
-    - pkg-config@0.29.2
-    - xrootd@5.1.0 cxxstd=17 +python
-    - root@6.22.08 cxxstd=17 
+  - Included software (for the exact versions, check the file [spack.yaml](spack.yaml) or use the command `eic-info` inside the container):
+    - gcc
+    - madx
+    - cmake
+    - fmt cxxstd=17
+    - spdlog
+    - nlohmann-json
+    - heppdt
+    - clhep cxxstd=17
+    - eigen
+    - python
+    - py-numpy
+    - py-pip
+    - pkg-config
+    - xrootd cxxstd=17 +python
+    - root cxxstd=17 
           +fftw +fortran +gdml +http +mlp +pythia8 
           +root7 +tmva +vc +xrootd +ssl 
           ^mesa swr=none +opengl -llvm -osmesa
-    - pythia8@8303 +fastjet
-    - fastjet@3.3.3
-    - hepmc3@3.2.2 +python +rootio 
-    - stow@2.3.1
-    - cairo@1.16.0 +fc+ft+X+pdf+gobject
-    - podio@0.13.1
-    - geant4@10.7.1 cxxstd=17 +opengl +vecgeom +x11 +qt +threads ^qt +opengl
-    - dd4hep@1.17 +geant4 +assimp +hepmc3 +ipo +lcio
-    - acts@8.03.0p1 +dd4hep +digitization +identification +json +tgeo +ipo
-    - genfit@2.00.00
-    - gaudi@36.0
-    - dawn@3_91a
-    - dawncut@1_54a
-    - opencascade@7.4.0p1
-    - emacs@27.0:27.99 toolkit=athena
-    - imagemagick@7.0.0:7.0.99
-    - igprof@5.9.16
+    - pythia8 +fastjet
+    - fastjet
+    - hepmc3 +python +rootio 
+    - stow
+    - cairo +fc+ft+X+pdf+gobject
+    - podio
+    - geant4 cxxstd=17 +opengl +vecgeom +x11 +qt +threads ^qt +opengl
+    - dd4hep +geant4 +assimp +hepmc3 +ipo +lcio
+    - acts +dd4hep +digitization +identification +json +tgeo +ipo +examples +fatras +geant4
+    - genfit
+    - gaudi
+    - dawn
+    - dawncut
+    - opencascade
+    - emacs toolkit=athena
+    - imagemagick
+    - igprof
   - The singularity build exports the following applications:
     - eic-shell: a development shell in the image
