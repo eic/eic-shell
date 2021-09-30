@@ -232,7 +232,11 @@ if __name__ == "__main__":
     version_docker = None
     version_gitlab = None
     build_job = '{}:singularity:default'.format(args.container)
-    if args.version in ('master', 'testing'):
+    ## firs tlook for spacialty containers
+    if args.container == 'acts_material_scan':
+        version_docker = args.version
+        version_gitlab = args.container
+    elif args.version in ('master', 'testing'):
         version_docker = 'testing'
         version_gitlab = 'master'
     elif re.search('[0-9]+\.[0-9]+\.[0-9]|[0-9]+\.[0-9]-stable', args.version) is not None:
@@ -253,6 +257,10 @@ if __name__ == "__main__":
         ## fixme add proper error handling
         print('Unknown requested version:', args.version)
         raise UnknownVersionError()
+
+    ## 'master' is always docker-tagged as testing
+    if version_docker == 'master':
+        version_docker = testing
 
     ## when working with the old container, the build job is just 'singularity'
     if args.container == 'eic':
