@@ -232,10 +232,10 @@ if __name__ == "__main__":
     version_docker = None
     version_gitlab = None
     build_job = '{}:singularity:default'.format(args.container)
-    ## firs tlook for spacialty containers
+    ## firs look for spacialty containers
     if args.container == 'acts_material_scan':
         version_docker = args.version
-        version_gitlab = args.container
+        version_gitlab = 'acts-material-scan' #dashes, not underscores
     elif args.version in ('master', 'testing'):
         version_docker = 'testing'
         version_gitlab = 'master'
