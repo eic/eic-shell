@@ -180,17 +180,17 @@ function install_linux() {
   ## is always bound. We also check for the existence of a few standard
   ## locations (/scratch /volatile /cache) and bind those too if found
   echo " - Determining additional bind paths"
+  BINDPATH=${SINGULARITY_BINDPATH}
+  echo "   --> system bindpath: $BINDPATH"
   PREFIX_ROOT="/$(realpath $PREFIX | cut -d "/" -f2)"
-  BINDPATH=$PREFIX_ROOT
-  echo "   --> $PREFIX_ROOT"
-  for dir in /work /scratch /volatile /cache /gpfs /gpfs01 /gpfs02; do
+  for dir in /work /scratch /volatile /cache /gpfs /gpfs01 /gpfs02 $PREFIX_ROOT; do
     ## only add directories once
     if [[ ${BINDPATH} =~ $(basename $dir) ]]; then
       continue
     fi
     if [ -d $dir ]; then
       echo "   --> $dir"
-      BINDPATH="${BINDPATH},$dir"
+      BINDPATH=${dir}${BINDPATH:+,$BINDPATH}
     fi
   done
 
@@ -279,7 +279,7 @@ if [ ! -z \${UPGRADE} ]; then
 fi
 
 export ATHENA_PREFIX=$PREFIX/local
-export SINGULARITY_BINDPATH=$BINDPATH\${SINGULARITY_BINDPATH:+:\$SINGULARITY_BINDPATH}
+export SINGULARITY_BINDPATH=$BINDPATH
 $SINGULARITY exec $SIF eic-shell \$@
 EOF
 
