@@ -183,7 +183,7 @@ function install_linux() {
   PREFIX_ROOT="/$(realpath $PREFIX | cut -d "/" -f2)"
   BINDPATH=$PREFIX_ROOT
   echo "   --> $PREFIX_ROOT"
-  for dir in /work /scratch /volatile /cache; do
+  for dir in /work /scratch /volatile /cache /gpfs /gpfs01 /gpfs02; do
     ## only add directories once
     if [[ ${BINDPATH} =~ $(basename $dir) ]]; then
       continue
@@ -279,7 +279,7 @@ if [ ! -z \${UPGRADE} ]; then
 fi
 
 export ATHENA_PREFIX=$PREFIX/local
-export SINGULARITY_BINDPATH=$BINDPATH
+export SINGULARITY_BINDPATH=$BINDPATH\${SINGULARITY_BINDPATH:+:\$SINGULARITY_BINDPATH}
 $SINGULARITY exec $SIF eic-shell \$@
 EOF
 
