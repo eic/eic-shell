@@ -239,13 +239,16 @@ if __name__ == "__main__":
     elif args.version in ('master', 'testing'):
         version_docker = 'testing'
         version_gitlab = 'master'
-    elif re.search('[0-9]+\.[0-9]+\.[0-9]|[0-9]+\.[0-9]-stable', args.version) is not None:
-        version_docker = args.version
-        version_gitlab = args.version
+    elif re.search('[0-9]+\.[0-9]', args.version) is not None:
+        suffix='-stable'
+        if re.search('{}$'.format(suffix), args.version):
+            suffix=''
+        version_docker = args.version + suffix
+        version_gitlab = args.version + suffix
         if version_docker[0] == 'v':
             version_docker = version_docker[1:]
         if version_gitlab[0].isdigit():
-            version_gitlab = 'v{}'.format(args.version)
+            version_gitlab = 'v{}'.format(version_gitlab)
     elif args.version[:3] == 'mr-':
         version_docker = 'unstable'
         version_gitlab = 'refs/merge-requests/{}/head'.format(args.version[3:])
