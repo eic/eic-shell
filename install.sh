@@ -280,7 +280,7 @@ fi
 
 export ATHENA_PREFIX=$PREFIX/local
 export SINGULARITY_BINDPATH=$BINDPATH
-\${SINGULARITY:-$SINGULARITY} exec \${SIF:-$SIF} eic-shell \$@
+\${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell \$@
 EOF
 
   chmod +x eic-shell
