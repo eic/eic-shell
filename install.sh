@@ -81,7 +81,7 @@ echo "Setting up development environment for eicweb/$CONTAINER:$VERSION"
 
 mkdir -p $PREFIX/local/lib || exit 1
 
-function install_linux() {
+function install_singularity() {
   SINGULARITY=
   ## check for a singularity install
   ## default singularity if new enough
@@ -213,7 +213,7 @@ function print_the_help {
   echo "          -n,--no-cvmfs   Disable check for local CVMFS when updating. (D: enabled)"
   echo "          -h,--help       Print this message"
   echo ""
-  echo "  Start the eic-shell containerized software environment."
+  echo "  Start the eic-shell containerized software environment (Singularity version)."
   echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
@@ -288,11 +288,11 @@ EOF
   echo " - Created custom eic-shell excecutable"
 }
 
-function install_macos() {
+function install_docker() {
   ## check for docker install
   DOCKER=$(which docker)
   if [ -z ${DOCKER} ]; then
-    echo "ERROR: no docker install found, docker is required for running on MacOS"
+    echo "ERROR: no docker install found, docker is required for the docker-based install"
   fi
   echo " - Found docker at ${DOCKER}"
 
@@ -318,9 +318,14 @@ function install_macos() {
     fi
   done
   echo " - Docker mount directive: '$MOUNT'"
+  PLATFORM_FLAG=''
+  if [ `uname -m` = 'arm64' ]; then
+    PLATFORM_FLAG='--platform linux/amd64'
+    echo " - Additional platform flag to run on arm64"
+  fi
 
   ## create a new top-level eic-shell launcher script
-  ## that sets the ATHENA_PREFIX and then starts singularity
+  ## that sets the magix PREFIX and then starts singularity
 cat << EOF > eic-shell
 #!/bin/bash
 
@@ -337,7 +342,7 @@ function print_the_help {
   echo "          -u,--upgrade    Upgrade the container to the latest version"
   echo "          -h,--help       Print this message"
   echo ""
-  echo "  Start the eic-shell containerized software environment."
+  echo "  Start the eic-shell containerized software environment (Docker version)."
   echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
@@ -379,7 +384,7 @@ if [ ! -z \${UPGRADE} ]; then
   exit 0
 fi
 
-docker run $MOUNT -w=$PWD -it --rm -e ATHENA_PREFIX=$PREFIX/local $IMG eic-shell \$@
+docker run $PLATFORM_FLAG $MOUNT -w=$PWD -it --rm -e ATHENA_PREFIX=$PREFIX/local $IMG eic-shell \$@
 EOF
 
   chmod +x eic-shell
@@ -389,14 +394,21 @@ EOF
 
 ## detect OS
 OS=`uname -s`
+CPU=`uname -m`
 case ${OS} in
   Linux)
     echo " - Detected OS: Linux"
-    install_linux
+    echo " - Detected CPU: $CPU"
+    if [ "$CPU" = "arm64" ]; then
+      install_docker
+    else
+      install_singularity
+    fi
     ;;
   Darwin)
     echo " - Detected OS: MacOS"
-    install_macos
+    echo " - Detected CPU: $CPU"
+    install_docker
     ;;
   *)
     echo "ERROR: OS '${OS}' not currently supported"
