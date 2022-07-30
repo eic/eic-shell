@@ -29,7 +29,7 @@ eic-shell
 ```
 
 4. Within your development environment (`eic-shell`), you can install software to the
-   internal `$ATHENA_PREFIX`
+   internal `$EIC_SHELL_PREFIX`
 
 Singularity Container setup for Development Usage
 -------------

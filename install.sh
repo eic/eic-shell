@@ -4,7 +4,7 @@
 ## in your local environment under $PREFIX/local/lib
 ## and creates a simple top-level launcher script
 ## that launches the container for this working directory
-## with the $ATHENA_PREFIX variable pointing
+## with the $EIC_SHELL_PREFIX variable pointing
 ## to the $PREFIX/local directory
 
 CONTAINER="jug_xl"
@@ -195,7 +195,7 @@ function install_singularity() {
   done
 
   ## create a new top-level eic-shell launcher script
-  ## that sets the ATHENA_PREFIX and then starts singularity
+  ## that sets the EIC_SHELL_PREFIX and then starts singularity
 cat << EOF > eic-shell
 #!/bin/bash
 
@@ -278,7 +278,7 @@ if [ ! -z \${UPGRADE} ]; then
   exit 0
 fi
 
-export ATHENA_PREFIX=$PREFIX/local
+export EIC_SHELL_PREFIX=$PREFIX/local
 export SINGULARITY_BINDPATH=$BINDPATH
 \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell \$@
 EOF
@@ -325,7 +325,7 @@ function install_docker() {
   fi
 
   ## create a new top-level eic-shell launcher script
-  ## that sets the magix PREFIX and then starts singularity
+  ## that sets the EIC_SHELL_PREFIX and then starts singularity
 cat << EOF > eic-shell
 #!/bin/bash
 
@@ -384,7 +384,7 @@ if [ ! -z \${UPGRADE} ]; then
   exit 0
 fi
 
-docker run $PLATFORM_FLAG $MOUNT -w=$PWD -it --rm -e ATHENA_PREFIX=$PREFIX/local $IMG eic-shell \$@
+docker run $PLATFORM_FLAG $MOUNT -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@
 EOF
 
   chmod +x eic-shell
