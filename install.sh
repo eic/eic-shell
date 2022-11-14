@@ -183,7 +183,7 @@ function install_singularity() {
   BINDPATH=${SINGULARITY_BINDPATH}
   echo "   --> system bindpath: $BINDPATH"
   PREFIX_ROOT="/$(realpath $PREFIX | cut -d "/" -f2)"
-  for dir in /work /scratch /volatile /cache /gpfs /gpfs01 /gpfs02 $PREFIX_ROOT; do
+  for dir in /w /work /scratch /volatile /cache /gpfs /gpfs01 /gpfs02 $PREFIX_ROOT; do
     ## only add directories once
     if [[ ${BINDPATH} =~ $(basename $dir) ]]; then
       continue
