@@ -1,11 +1,11 @@
-EIC software container
+EIC software environment container utilities
 ============================================
 
 Simple Installation
-------------
+-------------------
 
-*The environment has been tested on linux (requires singularity v3+) and MacOS (requires
-docker)*
+*The environment has been tested on linux (requires singularity v3+ or apptainer v1+)
+and MacOS (requires docker)*
 
 Please follow the steps below to setup and run the container in your environment.
 
@@ -19,34 +19,33 @@ cd $HOME/eic
 2. Execute the following line in your terminal to setup your environment in this directory
    to install the latest stable container
 ```bash
-curl https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.sh | bash
+curl -L https://github.com/eic/eic-shell/raw/main/install.sh | bash
 ```
 
 3. You can now load your development environment by executing the `eic-shell` script that
    is in your top-level working directory.
 ```bash
-eic-shell
+./eic-shell
 ```
 
 4. Within your development environment (`eic-shell`), you can install software to the
-   internal `$EIC_SHELL_PREFIX`
+   internal prefix `$EIC_SHELL_PREFIX`
 
-Singularity Container setup for Development Usage
--------------
+Installation for Development Usage
+----------------------------------
 **Note: this container download script is meant for expert usage. If it is unclear to you
-why you would want to do this, you are probably looking for the simple `jug_xl` installation
-above.**
+why you would want to do this, you are probably looking for the simple installation above.**
 
 You can use the same install scripts to setup other container setups, including `jug_dev`
 (the main development container). Note that for `jug_dev` there is no nighlty release, and
 the appropriate version (tag) would be `testing`.  To setup the `jug_dev:testing` environment, do
 ```bash
-curl https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.sh | bash -s -- -c jug_dev -v testing
+curl -L https://github.com/eic/eic-shell/raw/main/install.sh | bash -s -- -c jug_dev -v testing
 ```
 
 Included software:
 ------------------
-  - Included software (for the exact versions, check the file [spack.yaml](spack.yaml) or use the command `eic-info` inside the container):
+  - Included software (for the exact versions, use the command `eic-info` inside the container):
     - gcc
     - madx
     - cmake
@@ -112,4 +111,3 @@ The docker containers are publicly accessible from
    action needed. For the most optimal experience, you can install your software to
    `/usr/local` to fully integrate with the existing environment. (Note that, internally,
    `/usr/local` is a symlink to `/opt/view`).
-
