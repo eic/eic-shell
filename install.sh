@@ -154,7 +154,7 @@ function install_singularity() {
       ## work in temp directory
       tmp_dir=$(mktemp -d -t ci-XXXXXXXXXX)
       pushd $tmp_dir
-      wget https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.py
+      wget https://eic.github.io/eic-shell/install.py
       chmod +x install.py
       ./install.py -f -c $CONTAINER -v $VERSION .
       INSIF=lib/`basename ${SIF}`
