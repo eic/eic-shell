@@ -272,7 +272,7 @@ if [ ! -z \${UPGRADE} ]; then
   if [ ! -z \${DISABLE_CVMFS_USAGE} ]; then
     FLAGS="\${FLAGS} --no-cvmfs"
   fi
-  curl https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.sh \
+  curl -L https://github.com/eic/eic-shell/raw/main/install.sh \
     | bash -s -- \${FLAGS}
   echo "eic-shell upgrade sucessful"
   exit 0
