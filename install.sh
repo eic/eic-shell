@@ -37,6 +37,7 @@ while [ $# -gt 0 ]; do
       ;;
     -t|--tmpdir)
       export TMPDIR=$2
+      export APPTAINER_TMPDIR=$2
       export SINGULARITY_TMPDIR=$2
       shift
       shift
@@ -83,14 +84,22 @@ mkdir -p $PREFIX/local/lib || exit 1
 
 function install_singularity() {
   SINGULARITY=
-  ## check for a singularity install
-  ## default singularity if new enough
-  if [ $(type -P singularity ) ]; then
-    SINGULARITY=$(which singularity)
+  ## check for an apptainer install
+  ## default to apptainer if found
+  if [ $(type -P apptainer ) ]; then
+    SINGULARITY=$(which apptainer)
     SINGULARITY_VERSION=`$SINGULARITY --version`
-    if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
-      ## too old, look for something else
-      SINGULARITY=
+  fi
+  if [ -z $SINGULARITY ]; then
+    ## check for a singularity install
+    ## default to singularity if new enough
+    if [ $(type -P singularity ) ]; then
+      SINGULARITY=$(which singularity)
+      SINGULARITY_VERSION=`$SINGULARITY --version`
+      if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
+        ## too old, look for something else
+        SINGULARITY=
+      fi
     fi
   fi
   if [ -z $SINGULARITY ]; then
@@ -100,16 +109,18 @@ function install_singularity() {
     ## whatever is in the path is next
     elif [ $(type -P singularity ) ]; then
       SINGULARITY=$(which singularity)
+    ## cvmfs apptainer is last resort (sandbox mode can cause issues)
+    elif [ -f "/cvmfs/oasis.opensciencegrid.org/mis/apptainer/bin/apptainer" ]; then
     ## cvmfs singularity is last resort (sandbox mode can cause issues)
     elif [ -f "/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity" ]; then
       SINGULARITY="/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity"
     ## not good...
     else
-      echo "ERROR: no singularity found, please make sure you have singularity in your \$PATH"
+      echo "ERROR: no apptainer or singularity found, please make sure you have apptainer or singularity in your \$PATH"
       exit 1
     fi
   fi
-  echo " - Found singularity at $SINGULARITY"
+  echo " - Found apptainer/singularity at $SINGULARITY"
 
   ## get singularity version
   ## we only care if is 2.x or not, so we can use singularity --version 
@@ -180,7 +191,7 @@ function install_singularity() {
   ## is always bound. We also check for the existence of a few standard
   ## locations (/scratch /volatile /cache) and bind those too if found
   echo " - Determining additional bind paths"
-  BINDPATH=${SINGULARITY_BINDPATH}
+  BINDPATH=${SINGULARITY_BINDPATH}${APPTAINER_BINDPATH:+,${APPTAINER_BINDPATH}}
   echo "   --> system bindpath: $BINDPATH"
   PREFIX_ROOT="/$(realpath $PREFIX | cut -d "/" -f2)"
   for dir in /w /work /scratch /volatile /cache /gpfs /gpfs01 /gpfs02 $PREFIX_ROOT; do
@@ -195,7 +206,7 @@ function install_singularity() {
   done
 
   ## create a new top-level eic-shell launcher script
-  ## that sets the EIC_SHELL_PREFIX and then starts singularity
+  ## that sets the EIC_SHELL_PREFIX and then starts apptainer/singularity
 cat << EOF > eic-shell
 #!/bin/bash
 
@@ -215,7 +226,7 @@ function print_the_help {
   echo "          -v,--version    Version to install (D: \$VERSION) (requires cvmfs)"
   echo "          -h,--help       Print this message"
   echo ""
-  echo "  Start the eic-shell containerized software environment (Singularity version)."
+  echo "  Start the eic-shell containerized software environment (Apptainer/Singularity version)."
   echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
@@ -294,6 +305,7 @@ if [ ! -z \${UPGRADE} ]; then
 fi
 
 export EIC_SHELL_PREFIX=$PREFIX/local
+export APPTAINER_BINDPATH=$BINDPATH
 export SINGULARITY_BINDPATH=$BINDPATH
 \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell \$@
 EOF
@@ -340,7 +352,7 @@ function install_docker() {
   fi
 
   ## create a new top-level eic-shell launcher script
-  ## that sets the EIC_SHELL_PREFIX and then starts singularity
+  ## that sets the EIC_SHELL_PREFIX and then starts apptainer/singularity
 cat << EOF > eic-shell
 #!/bin/bash
 
