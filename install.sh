@@ -209,7 +209,11 @@ DISABLE_CVMFS_USAGE=${DISABLE_CVMFS_USAGE}
 function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
-  echo "          -u,--upgrade    Upgrade the container to the latest version"
+  echo "          -c,--container  Use a specific container"
+  echo "          -i,--install    Install a container"
+  echo "          -u,--upgrade    Upgrade a container"
+  echo "          -r,--remove     Remove a container"
+  echo "          -l,--list       List available containers"
   echo "          -n,--no-cvmfs   Disable check for local CVMFS when updating. (D: enabled)"
   echo "          -h,--help       Print this message"
   echo ""
@@ -217,19 +221,54 @@ function print_the_help {
   echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
-  echo "  - Upgrade the container:      ./eic-shell --upgrade"
+  echo "  - Start a specific container: ./eic-shell --container \$CONTAINER" 
+  echo "  - Use a specific version:     ./eic-shell --version \$VERSION" 
+  echo "  - Install a container:        ./eic-shell --install \$CONTAINER"
+  echo "  - Upgrade a container:        ./eic-shell --upgrade \$CONTAINER"
+  echo "  - Remove a container:         ./eic-shell --remove \$CONTAINER"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
   echo ""
   exit
 }
 
+INSTALL=
 UPGRADE=
+REMOVE=
+LIST=
 
 while [ \$# -gt 0 ]; do
   key=\$1
   case \$key in
+    -c|--container)
+      shift
+      CONTAINER=\$1
+      shift
+      ;;
+    -v|--version)
+      shift
+      VERSION=\$1
+      shift
+      ;;
+    -i|--install)
+      INSTALL=1
+      shift
+      CONTAINER=\$1
+      shift
+      ;;
     -u|--upgrade)
       UPGRADE=1
+      shift
+      CONTAINER=\$1
+      shift
+      ;;
+    -r|--remove)
+      REMOVE=1
+      shift
+      CONTAINER=\$1
+      shift
+      ;;
+    -l|--list)
+      LIST=1
       shift
       ;;
     -n|--no-cvmfs)
