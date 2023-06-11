@@ -1,6 +1,8 @@
 EIC software environment container utilities
 ============================================
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/eic/eic-shell?quickstart=1)
+
 Simple Installation
 -------------------
 
