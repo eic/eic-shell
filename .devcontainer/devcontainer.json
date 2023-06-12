@@ -1,4 +1,14 @@
 {
         "name": "eic-shell",
-        "image": "ghcr.io/eic/jug_xl:nightly"
+        "image": "ghcr.io/eic/jug_xl:nightly",
+
+	// Forward Jupyter port locally, mark required.
+	"forwardPorts": [8888],
+	"portsAttributes": {
+		"8888": {
+			"label": "Jupyter",
+			"requireLocalPort": true,
+			"onAutoForward": "ignore"
+		}
+	},
 }
