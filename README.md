@@ -1,10 +1,21 @@
 EIC software environment container utilities
 ============================================
 
+Running in browser
+------------------
+
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/eic/eic-shell?quickstart=1)
 
-Simple Installation
--------------------
+Inside this codespace, you can start a Jupyter Lab server with the following command:
+```console
+jupyter lab \
+  --no-browser --allow-root --port 8888 --ServerApp.token="" \
+  --NotebookApp.allow_origin=https://${CODESPACE_NAME}-8888.preview.app.github.dev
+```
+A popup will indicate the newly opened port and offer to open the URL in your browser.
+
+Local Installation
+------------------
 
 *The environment has been tested on linux (requires singularity v3+ or apptainer v1+)
 and MacOS (requires docker)*
@@ -106,10 +117,9 @@ The docker containers are publicly accessible from
 1. To load the container environment in your run scripts, you have to do nothing special.  
    The environment is already setup with good defaults, so you can use all the programs 
    in the container as usual and assume everything needed to run the included software 
-   is already setup.  
+   is already setup.
 
 2. If using this container as a basis for a new container, you can direction access 
    the full container environment from a docker `RUN` shell command with no further
    action needed. For the most optimal experience, you can install your software to
-   `/usr/local` to fully integrate with the existing environment. (Note that, internally,
-   `/usr/local` is a symlink to `/opt/view`).
+   `/usr/local` to fully integrate with the existing environment.
