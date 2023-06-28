@@ -6,14 +6,6 @@ Running in browser
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/eic/eic-shell?quickstart=1)
 
-Inside this codespace, you can start a Jupyter Lab server with the following command:
-```console
-jupyter lab \
-  --no-browser --allow-root --port 8888 --ServerApp.token="" \
-  --NotebookApp.allow_origin=https://${CODESPACE_NAME}-8888.preview.app.github.dev
-```
-A popup will indicate the newly opened port and offer to open the URL in your browser.
-
 Local Installation
 ------------------
 
