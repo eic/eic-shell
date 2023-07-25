@@ -340,6 +340,7 @@ function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade    Upgrade the container to the latest version"
+  echo "          -X              Activate X11 forwarding on macOS (not needed for singularity)"
   echo "          -h,--help       Print this message"
   echo ""
   echo "  Start the eic-shell containerized software environment (Docker version)."
@@ -361,7 +362,17 @@ while [ \$# -gt 0 ]; do
       UPGRADE=1
       shift
       ;;
-    -h|--help)
+EOF
+  if [ `uname -s` = 'Darwin' ]; then
+      cat << EOF2 >> eic-shell
+    -X)
+      MACX=1
+      shift
+      ;;
+EOF2
+  fi
+cat << EOF3 >> eic-shell
+     -h|--help)
       print_the_help
       exit 0
       ;;
@@ -383,12 +394,19 @@ if [ ! -z \${UPGRADE} ]; then
   echo "eic-shell upgrade sucessful"
   exit 0
 fi
+EOF3
 
-docker run $PLATFORM_FLAG $MOUNT -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@
-EOF
+  if [ `uname -s` = 'Darwin' ]; then
+      echo 'if [ ${MACX} ]; then' >> eic-shell
+      ## getting the following single and double quotes, escapes and backticks right was a nightmare
+      ## But with a heredoc it was worse
+      echo '  dispnum=`ps -e |grep Xquartz | grep listen | grep -v xinit |awk ' "'{print" '$5}'"'" '`' >> eic-shell
+      echo '  XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"' >> eic-shell
+      echo 'fi' >> eic-shell
+      echo "docker run $PLATFORM_FLAG $MOUNT \$XSTUFF -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@" >> eic-shell
+  fi
 
   chmod +x eic-shell
-
   echo " - Created custom eic-shell excecutable"
 }
 
