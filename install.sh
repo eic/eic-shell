@@ -400,11 +400,16 @@ EOF3
       echo 'if [ ${MACX} ]; then' >> eic-shell
       ## getting the following single and double quotes, escapes and backticks right was a nightmare
       ## But with a heredoc it was worse
+      echo '  echo Activating XQuartz support in Docker.' >> eic-shell
+ cat << EOF4 >> eic-shell
+  echo 'If needed (should be only once): In XQuartz settings --> Security --> enable "Allow connections from network clients"'
+EOF4
+      echo '  xhost +localhost' >> eic-shell
       echo '  dispnum=`ps -e |grep Xquartz | grep listen | grep -v xinit |awk ' "'{print" '$5}'"'" '`' >> eic-shell
       echo '  XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"' >> eic-shell
       echo 'fi' >> eic-shell
-      echo "docker run $PLATFORM_FLAG $MOUNT \$XSTUFF -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@" >> eic-shell
   fi
+  echo "docker run $PLATFORM_FLAG $MOUNT \$XSTUFF -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@" >> eic-shell
 
   chmod +x eic-shell
   echo " - Created custom eic-shell excecutable"
