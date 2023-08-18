@@ -340,7 +340,7 @@ function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade    Upgrade the container to the latest version"
-  echo "          -noX            Disable X11 forwarding on macOS (not needed for singularity)"
+  echo "          --noX           Disable X11 forwarding on macOS (not needed for singularity)"
   echo "          -h,--help       Print this message"
   echo ""
   echo "  Start the eic-shell containerized software environment (Docker version)."
@@ -365,7 +365,7 @@ while [ \$# -gt 0 ]; do
 EOF
   if [ `uname -s` = 'Darwin' ]; then
       cat << EOF2 >> eic-shell
-    -noX)
+    --noX)
       MACX=
       shift
       ;;
