@@ -340,7 +340,7 @@ function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade    Upgrade the container to the latest version"
-  echo "          -X              Activate X11 forwarding on macOS (not needed for singularity)"
+  echo "          -noX            Disable X11 forwarding on macOS (not needed for singularity)"
   echo "          -h,--help       Print this message"
   echo ""
   echo "  Start the eic-shell containerized software environment (Docker version)."
@@ -354,7 +354,7 @@ function print_the_help {
 }
 
 UPGRADE=
-
+MACX=1
 while [ \$# -gt 0 ]; do
   key=\$1
   case \$key in
@@ -365,8 +365,8 @@ while [ \$# -gt 0 ]; do
 EOF
   if [ `uname -s` = 'Darwin' ]; then
       cat << EOF2 >> eic-shell
-    -X)
-      MACX=1
+    -noX)
+      MACX=
       shift
       ;;
 EOF2
@@ -398,12 +398,16 @@ EOF3
 
   if [ `uname -s` = 'Darwin' ]; then
       echo 'if [ ${MACX} ]; then' >> eic-shell
+      # echo '  echo Activating XQuartz support in Docker.' >> eic-shell
+
+# cat << EOF4 >> eic-shell
+#   echo 'If needed (should be only once): In XQuartz settings --> Security --> enable "Allow connections from network clients"'
+# EOF4
+
+      echo ' nolisten=`defaults find nolisten_tcp | grep nolisten | awk ' "'{print" '$3}'"'" '|cut -b 1 `' >> eic-shell
+      echo ' [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)."' >> eic-shell
       ## getting the following single and double quotes, escapes and backticks right was a nightmare
       ## But with a heredoc it was worse
-      echo '  echo Activating XQuartz support in Docker.' >> eic-shell
- cat << EOF4 >> eic-shell
-  echo 'If needed (should be only once): In XQuartz settings --> Security --> enable "Allow connections from network clients"'
-EOF4
       echo '  xhost +localhost' >> eic-shell
       echo '  dispnum=`ps -e |grep Xquartz | grep listen | grep -v xinit |awk ' "'{print" '$5}'"'" '`' >> eic-shell
       echo '  XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"' >> eic-shell
