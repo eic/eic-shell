@@ -340,7 +340,7 @@ function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade    Upgrade the container to the latest version"
-  echo "          --noX           Disable X11 forwarding on macOS (not needed for singularity)"
+  echo "          --noX           Disable X11 forwarding on macOS"
   echo "          -h,--help       Print this message"
   echo ""
   echo "  Start the eic-shell containerized software environment (Docker version)."
@@ -354,7 +354,7 @@ function print_the_help {
 }
 
 UPGRADE=
-MACX=1
+NOX=
 while [ \$# -gt 0 ]; do
   key=\$1
   case \$key in
@@ -362,16 +362,10 @@ while [ \$# -gt 0 ]; do
       UPGRADE=1
       shift
       ;;
-EOF
-  if [ `uname -s` = 'Darwin' ]; then
-      cat << EOF2 >> eic-shell
     --noX)
-      MACX=
+      NOX=1
       shift
       ;;
-EOF2
-  fi
-cat << EOF3 >> eic-shell
      -h|--help)
       print_the_help
       exit 0
@@ -394,16 +388,10 @@ if [ ! -z \${UPGRADE} ]; then
   echo "eic-shell upgrade sucessful"
   exit 0
 fi
-EOF3
+EOF
 
   if [ `uname -s` = 'Darwin' ]; then
-      echo 'if [ ${MACX} ]; then' >> eic-shell
-      # echo '  echo Activating XQuartz support in Docker.' >> eic-shell
-
-# cat << EOF4 >> eic-shell
-#   echo 'If needed (should be only once): In XQuartz settings --> Security --> enable "Allow connections from network clients"'
-# EOF4
-
+      echo 'if [ ! ${NOX} ]; then' >> eic-shell
       echo ' nolisten=`defaults find nolisten_tcp | grep nolisten | awk ' "'{print" '$3}'"'" '|cut -b 1 `' >> eic-shell
       echo ' [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)."' >> eic-shell
       ## getting the following single and double quotes, escapes and backticks right was a nightmare
