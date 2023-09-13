@@ -340,6 +340,7 @@ function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade    Upgrade the container to the latest version"
+  echo "          --noX           Disable X11 forwarding on macOS"
   echo "          -h,--help       Print this message"
   echo ""
   echo "  Start the eic-shell containerized software environment (Docker version)."
@@ -353,7 +354,7 @@ function print_the_help {
 }
 
 UPGRADE=
-
+NOX=
 while [ \$# -gt 0 ]; do
   key=\$1
   case \$key in
@@ -361,7 +362,11 @@ while [ \$# -gt 0 ]; do
       UPGRADE=1
       shift
       ;;
-    -h|--help)
+    --noX)
+      NOX=1
+      shift
+      ;;
+     -h|--help)
       print_the_help
       exit 0
       ;;
@@ -383,12 +388,22 @@ if [ ! -z \${UPGRADE} ]; then
   echo "eic-shell upgrade sucessful"
   exit 0
 fi
-
-docker run $PLATFORM_FLAG $MOUNT -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@
 EOF
 
-  chmod +x eic-shell
+  if [ `uname -s` = 'Darwin' ]; then
+      echo 'if [ ! ${NOX} ]; then' >> eic-shell
+      echo ' nolisten=`defaults find nolisten_tcp | grep nolisten | awk ' "'{print" '$3}'"'" '|cut -b 1 `' >> eic-shell
+      echo ' [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)."' >> eic-shell
+      ## getting the following single and double quotes, escapes and backticks right was a nightmare
+      ## But with a heredoc it was worse
+      echo '  xhost +localhost' >> eic-shell
+      echo '  dispnum=`ps -e |grep Xquartz | grep listen | grep -v xinit |awk ' "'{print" '$5}'"'" '`' >> eic-shell
+      echo '  XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"' >> eic-shell
+      echo 'fi' >> eic-shell
+  fi
+  echo "docker run $PLATFORM_FLAG $MOUNT \$XSTUFF -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@" >> eic-shell
 
+  chmod +x eic-shell
   echo " - Created custom eic-shell excecutable"
 }
 
