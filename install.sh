@@ -211,6 +211,8 @@ function print_the_help {
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade    Upgrade the container to the latest version"
   echo "          -n,--no-cvmfs   Disable check for local CVMFS when updating. (D: enabled)"
+  echo "          -c,--container  Container version (D: \$CONTAINER) (requires cvmfs)"
+  echo "          -v,--version    Version to install (D: \$VERSION) (requires cvmfs)"
   echo "          -h,--help       Print this message"
   echo ""
   echo "  Start the eic-shell containerized software environment (Singularity version)."
@@ -218,6 +220,7 @@ function print_the_help {
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
   echo "  - Upgrade the container:      ./eic-shell --upgrade"
+  echo "  - Use different version:      ./eic-shell --version \$(date +%y.%m).0-stable"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
   echo ""
   exit
@@ -234,6 +237,18 @@ while [ \$# -gt 0 ]; do
       ;;
     -n|--no-cvmfs)
       DISABLE_CVMFS_USAGE=true
+      shift
+      ;;
+    -c|--container)
+      CONTAINER=\$2
+      export SIF=/cvmfs/singularity.opensciencegrid.org/eicweb/\${CONTAINER}:\${VERSION}
+      shift
+      shift
+      ;;
+    -v|--version)
+      VERSION=\$2
+      export SIF=/cvmfs/singularity.opensciencegrid.org/eicweb/\${CONTAINER}:\${VERSION}
+      shift
       shift
       ;;
     -h|--help)
