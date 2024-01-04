@@ -277,8 +277,8 @@ if [ ! -z \${UPGRADE} ]; then
     echo "      instantiate a local version."
     echo "      This is only recommended for expert usage."
     echo ""
-    echo "Exiting without upgrade"
-    exit 0
+    echo "This will only upgrade the eic-shell script itself."
+    echo ""
   fi
   FLAGS="-p \${PREFIX} -v \${VERSION}"
   if [ ! -z \${TMPDIR} ]; then
