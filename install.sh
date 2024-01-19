@@ -407,7 +407,7 @@ EOF
 
   if [ `uname -s` = 'Darwin' ]; then
       echo 'if [ ! ${NOX} ]; then' >> eic-shell
-      echo ' nolisten=`defaults find nolisten_tcp | grep nolisten | awk ' "'{print" '$3}'"'" '|cut -b 1 `' >> eic-shell
+      echo ' nolisten=`defaults find nolisten_tcp | grep nolisten | head -n 1 | awk ' "'{print" '$3}'"'" '|cut -b 1 `' >> eic-shell
       echo ' [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)."' >> eic-shell
       ## getting the following single and double quotes, escapes and backticks right was a nightmare
       ## But with a heredoc it was worse
