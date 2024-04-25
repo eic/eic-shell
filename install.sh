@@ -10,6 +10,8 @@
 CONTAINER="jug_xl"
 VERSION="nightly"
 PREFIX="$PWD"
+FORCE_DOCKER=false
+
 
 function print_the_help {
   echo "USAGE:  ./install.sh [-p PREFIX] [-v VERSION]"
@@ -19,6 +21,7 @@ function print_the_help {
   echo "          -n,--no-cvmfs   Disable check for local CVMFS (D: enabled)"
   echo "          -c,--container  Container version (D: $CONTAINER)"
   echo "          -v,--version    Version to install (D: $VERSION)"
+  echo "          -d,--docker     Force docker installation"
   echo "          -h,--help       Print this message"
   echo ""
   echo "  Set up containerized development environment."
@@ -53,6 +56,10 @@ while [ $# -gt 0 ]; do
     -v|--version)
       VERSION=$2
       shift
+      shift
+      ;;
+    -d|--docker)
+      FORCE_DOCKER=true
       shift
       ;;
     -h|--help)
@@ -429,7 +436,7 @@ case ${OS} in
   Linux)
     echo " - Detected OS: Linux"
     echo " - Detected CPU: $CPU"
-    if [ "$CPU" = "arm64" ]; then
+    if [ "$CPU" = "arm64" ] || [ ${FORCE_DOCKER} ]; then
       install_docker
     else
       install_singularity
