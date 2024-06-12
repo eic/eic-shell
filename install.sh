@@ -398,7 +398,7 @@ while [ \$# -gt 0 ]; do
 done
 
 if [ x\${DISPLAY} == "x" ] ; then
-  echo "No X11 display detected, disabling X11 forwarding"
+  echo "No X11 display detected, disabling X11"
   NOX=1
 fi
 
