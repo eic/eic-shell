@@ -7,7 +7,7 @@
 ## with the $EIC_SHELL_PREFIX variable pointing
 ## to the $PREFIX/local directory
 
-CONTAINER="jug_xl"
+CONTAINER="eic_xl"
 VERSION="nightly"
 PREFIX="$PWD"
 

@@ -19,7 +19,7 @@ import re
 import urllib.request
 
 ## Gitlab group and project/program name. 
-DEFAULT_IMG='jug_xl'
+DEFAULT_IMG='eic_xl'
 DEFAULT_VERSION='3.0.1'
 
 SHORTCUTS = ['eic-shell']
@@ -177,7 +177,7 @@ if __name__ == "__main__":
             dest='container',
             default=DEFAULT_IMG,
             help='(opt.) Container to install. '
-                 'D: {} (also available: jug_dev, and legacy "eic" container).')
+                 'D: {} (also available: eic_dev, and legacy "eic" container).')
     parser.add_argument(
             '-v', '--version',
             dest='version',

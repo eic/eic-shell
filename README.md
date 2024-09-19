@@ -41,11 +41,11 @@ Installation for Development Usage
 **Note: this container download script is meant for expert usage. If it is unclear to you
 why you would want to do this, you are probably looking for the simple installation above.**
 
-You can use the same install scripts to setup other container setups, including `jug_dev`
-(the main development container). Note that for `jug_dev` there is no nighlty release, and
-the appropriate version (tag) would be `testing`.  To setup the `jug_dev:testing` environment, do
+You can use the same install scripts to setup other container setups, including `eic_dev`
+(the main development container). Note that for `eic_dev` there is no nighlty release, and
+the appropriate version (tag) would be `testing`.  To setup the `eic_dev:testing` environment, do
 ```bash
-curl -L https://github.com/eic/eic-shell/raw/main/install.sh | bash -s -- -c jug_dev -v testing
+curl -L https://github.com/eic/eic-shell/raw/main/install.sh | bash -s -- -c eic_dev -v testing
 ```
 
 Included software:
@@ -94,15 +94,15 @@ Using the docker container for your CI purposes
 
 **These instructions are old and need updating. In general we recommend using
 `eicweb/juggler:latest` for most CI usages. This image is functionally identical to
-`jug_xl:nightly`**
+`eic_xl:nightly`**
 
 The docker containers are publicly accessible from
 [Dockerhub](https://hub.docker.com/u/eicweb). You probably want to use the default
-`jug_xl` container. Relevant versions are:
- - `eicweb/jug_xl:nightly`: nightly release, with latest detector and reconstruction
+`eic_xl` container. Relevant versions are:
+ - `eicweb/eic_xl:nightly`: nightly release, with latest detector and reconstruction
    version. This is probably what you want to use unless you are dispatching a large
    simulation/reconstruciton job
- - `eicweb/jug_xl:3.0-stable`: latest stable release, what you want to use for large
+ - `eicweb/eic_xl:3.0-stable`: latest stable release, what you want to use for large
    simulation jobs (for reproducibility). Please coordinate with the software group to
    ensure all desired software changes are present in this container.
 
