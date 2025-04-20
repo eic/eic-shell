@@ -93,8 +93,7 @@ Using the docker container for your CI purposes
 -----------------------------------------------
 
 **These instructions are old and need updating. In general we recommend using
-`eicweb/juggler:latest` for most CI usages. This image is functionally identical to
-`eic_xl:nightly`**
+`eic_xl:nightly` for most CI usages.**
 
 The docker containers are publicly accessible from
 [Dockerhub](https://hub.docker.com/u/eicweb). You probably want to use the default
