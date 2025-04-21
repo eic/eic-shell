@@ -7,7 +7,7 @@
 ## with the $EIC_SHELL_PREFIX variable pointing
 ## to the $PREFIX/local directory
 
-ORGANIZATION="eic"
+ORGANIZATION="eicweb"
 CONTAINER="eic_xl"
 VERSION="nightly"
 PREFIX="$PWD"
