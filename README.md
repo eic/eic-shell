@@ -6,6 +6,18 @@ Running in browser
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/eic/eic-shell?quickstart=1)
 
+## Using as Template Repository
+
+**For EIC Software Developers**: This repository serves as a template for creating new EIC software projects with complete development environment support.
+
+### Quick Template Usage
+1. Click **"Use this template"** button above
+2. Create your new repository
+3. Open in GitHub Codespaces for instant EIC development environment
+4. Start coding with full physics software stack and GitHub Copilot support
+
+See [Template Usage Guide](.github/TEMPLATE_USAGE.md) for detailed instructions on setting up derived repositories with this EIC development environment.
+
 Local Installation
 ------------------
 

@@ -1,4 +1,50 @@
 {
         "name": "eic-shell",
         "image": "ghcr.io/eic/eic_xl:nightly",
+        
+        // Configure development features
+        "features": {},
+        
+        // Configure environment for EIC development
+        "containerEnv": {
+                "DISPLAY": ":1",
+                "EIC_SHELL_TEMPLATE": "true"
+        },
+        
+        // Enable GUI support
+        "runArgs": [
+                "--cap-add=SYS_PTRACE",
+                "--security-opt", "seccomp=unconfined"
+        ],
+        
+        // Forward common ports for web services
+        "forwardPorts": [8080, 8888, 3000],
+        
+        // VS Code customizations
+        "customizations": {
+                "vscode": {
+                        "extensions": [
+                                "ms-vscode.cpptools",
+                                "ms-vscode.cmake-tools",
+                                "ms-python.python",
+                                "twxs.cmake",
+                                "ms-vscode.hexeditor"
+                        ],
+                        "settings": {
+                                "C_Cpp.default.cppStandard": "c++17",
+                                "C_Cpp.default.includePath": [
+                                        "/usr/local/include",
+                                        "/opt/software/linux-*/gcc-*/*/include"
+                                ],
+                                "cmake.configureOnOpen": true,
+                                "python.defaultInterpreterPath": "/usr/local/bin/python3"
+                        }
+                }
+        },
+        
+        // Post-creation setup
+        "postCreateCommand": "echo 'EIC Development Environment Ready!' && echo 'Available tools: geant4, ROOT, DD4hep, Acts, Epic, EICrecon' && echo 'Use eic-info for software versions'",
+        
+        // Keep container running
+        "shutdownAction": "stopContainer"
 }

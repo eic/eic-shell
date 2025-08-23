@@ -1,0 +1,12 @@
+name: EIC Software Development Environment
+description: Complete development environment for EIC physics software with Geant4, ROOT, DD4hep, and EIC frameworks. Ready for GitHub Codespaces with Copilot support.
+tags:
+  - physics
+  - simulation
+  - eic
+  - geant4
+  - root
+  - dd4hep
+  - hep
+  - codespaces
+  - devcontainer
