@@ -1,6 +1,6 @@
 {
         "name": "eic-shell",
-        "image": "ghcr.io/eic/eic_xl:nightly",
+        "image": "ghcr.io/eic/eic_ci:nightly",
         "features": {},
         "containerEnv": {
                 "DISPLAY": ":1",
@@ -37,6 +37,6 @@
                         }
                 }
         },
-        "postCreateCommand": "pip install --user uproot matplotlib seaborn pandas jupyter jupyterlab && echo 'EIC Development Environment Ready!' && echo 'Available tools: geant4, ROOT, DD4hep, Acts, Epic, EICrecon' && echo 'Data analysis: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root' && echo 'Use eic-info for software versions'",
+        "postCreateCommand": "post-create.sh",
         "shutdownAction": "stopContainer"
 }
