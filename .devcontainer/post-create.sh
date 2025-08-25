@@ -2,7 +2,9 @@
 
 set -e
 
-git config --global --add safe.directory /workspace
+for dir in /workspace/* ; do
+  git config --global --add safe.directory "$dir"
+done
 git config --global commit.gpgsign false
 
 pip install --user uproot matplotlib seaborn pandas jupyter jupyterlab
