@@ -69,7 +69,7 @@ When working in a repository that uses this template:
 - CMake is the preferred build system
 - Install software to `$EIC_SHELL_PREFIX` for integration
 - Use pkg-config for library discovery
-- Follow C++17 standards
+- Follow C++20 standards
 
 ### Common Development Patterns
 
@@ -78,7 +78,7 @@ When working in a repository that uses this template:
 cmake_minimum_required(VERSION 3.16)
 project(MyEICProject)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find EIC packages
