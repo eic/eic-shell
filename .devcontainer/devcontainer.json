@@ -11,6 +11,12 @@
                 "--security-opt", "seccomp=unconfined"
         ],
         "forwardPorts": [8080, 8888, 3000],
+        "portsAttributes": {
+                "8888": {
+                        "label": "Jupyter Lab",
+                        "protocol": "http"
+                }
+        },
         "customizations": {
                 "vscode": {
                         "extensions": [
@@ -18,7 +24,8 @@
                                 "ms-vscode.cmake-tools",
                                 "ms-python.python",
                                 "twxs.cmake",
-                                "ms-vscode.hexeditor"
+                                "ms-vscode.hexeditor",
+                                "ms-toolsai.jupyter"
                         ],
                         "settings": {
                                 "C_Cpp.default.cppStandard": "c++20",
@@ -30,6 +37,6 @@
                         }
                 }
         },
-        "postCreateCommand": "echo 'EIC Development Environment Ready!' && echo 'Available tools: geant4, ROOT, DD4hep, Acts, Epic, EICrecon' && echo 'Use eic-info for software versions'",
+        "postCreateCommand": "pip install --user uproot matplotlib seaborn pandas jupyter jupyterlab && echo 'EIC Development Environment Ready!' && echo 'Available tools: geant4, ROOT, DD4hep, Acts, Epic, EICrecon' && echo 'Data analysis: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root' && echo 'Use eic-info for software versions'",
         "shutdownAction": "stopContainer"
 }

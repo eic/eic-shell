@@ -16,6 +16,13 @@ Running in browser
 3. Open in GitHub Codespaces for instant EIC development environment
 4. Start coding with full physics software stack and GitHub Copilot support
 
+**Features included in template:**
+- Complete EIC physics software stack (Geant4, ROOT, DD4hep, Acts, Epic, EICrecon)
+- GitHub Copilot with EIC-specific context and development patterns
+- Jupyter Lab with data analysis tools (uproot, matplotlib, pandas)
+- Sample notebook for EIC data analysis from XRootD servers
+- One-click development in GitHub Codespaces
+
 See [Template Usage Guide](.github/TEMPLATE_USAGE.md) for detailed instructions on setting up derived repositories with this EIC development environment.
 
 Local Installation

@@ -65,6 +65,13 @@ When working in a repository that uses this template:
 - Gaudi for event processing workflows
 - Use Podio for event data model definitions
 
+### EIC Data Analysis
+- **XRootD Access**: EIC simulation datasets available at `dtn-eic.jlab.org`
+- **Data Productions**: Located in `/volatile/eic/EPIC/RECO/YY.MM.patch` directories
+- **Jupyter Notebooks**: Preferred method for interactive data analysis
+- **Uproot**: Efficient ROOT file reading for Python analysis
+- **Latest Data**: Use most recent calendar-versioned production releases
+
 ### Build Systems
 - CMake is the preferred build system
 - Install software to `$EIC_SHELL_PREFIX` for integration
@@ -102,7 +109,25 @@ find_package(ROOT REQUIRED)
 # Python environment includes scientific packages
 import numpy as np
 import ROOT  # ROOT Python bindings available
+import uproot  # For reading ROOT files efficiently
 # Use for data analysis and visualization
+```
+
+#### EIC Data Analysis with XRootD
+```python
+# Access EIC simulation data from public XRootD server
+import uproot
+import numpy as np
+import matplotlib.pyplot as plt
+
+# List available data productions
+# xrdfs dtn-eic.jlab.org ls /volatile/eic/EPIC/RECO/25.04.1
+
+# Open files directly from XRootD server
+file_url = "root://dtn-eic.jlab.org//volatile/eic/EPIC/RECO/25.04.1/epic_craterlake/DIS/18x275/minQ2=1000/pythia8NCDIS_18x275_minQ2=1000_beamEffects_xAngle=-0.025_hiDiv_1.edm4hep.root"
+with uproot.open(file_url) as file:
+    tree = file["events"]
+    # Access reconstructed data for analysis
 ```
 
 ## Container Environment Details
@@ -180,3 +205,29 @@ Example comment for better Copilot suggestions:
 ```
 
 This environment provides everything needed for EIC software development, from detector simulation to data analysis, with full GitHub Codespaces and Copilot integration.
+
+### EIC Data Analysis with Jupyter
+
+The environment includes comprehensive support for analyzing EIC simulation data:
+
+- **Sample Notebook**: `examples/eic_data_analysis.ipynb` provides a complete example of analyzing EIC datasets
+- **XRootD Access**: Direct access to EIC data at `dtn-eic.jlab.org` without local downloads
+- **Analysis Tools**: Pre-configured with uproot, matplotlib, pandas, and scientific Python stack
+- **Jupyter Lab**: Start with `jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root`
+
+#### Quick Start for Data Analysis:
+```bash
+# Start Jupyter Lab (automatically configured in Codespaces)
+jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+
+# Or run the example notebook directly
+jupyter nbconvert --execute examples/eic_data_analysis.ipynb --to html
+```
+
+The sample notebook demonstrates:
+- Accessing EIC simulation data from XRootD servers
+- Reading EDM4hep files with uproot
+- Basic track and particle analysis
+- Physics plots (pT, η, φ distributions)
+- Invariant mass calculations
+- Standard EIC analysis patterns
