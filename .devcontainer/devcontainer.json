@@ -23,11 +23,10 @@
                         "settings": {
                                 "C_Cpp.default.cppStandard": "c++20",
                                 "C_Cpp.default.includePath": [
-                                        "/usr/local/include",
-                                        "/opt/software/linux-*/gcc-*/*/include"
+                                        "/opt/local/include"
                                 ],
                                 "cmake.configureOnOpen": true,
-                                "python.defaultInterpreterPath": "/usr/local/bin/python3"
+                                "python.defaultInterpreterPath": "/opt/local/bin/python"
                         }
                 }
         },
