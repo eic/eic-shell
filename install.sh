@@ -97,7 +97,7 @@ function install_singularity() {
     ## default to singularity if new enough
     if [ $(type -P singularity ) ]; then
       SINGULARITY=$(which singularity)
-      SINGULARITY_VERSION=`$SINGULARITY --version`
+      SINGULARITY_VERSION=$($SINGULARITY --version)
       if [ ${SINGULARITY_VERSION:0:1} = 2 ]; then
         ## too old, look for something else
         SINGULARITY=
