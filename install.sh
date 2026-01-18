@@ -193,7 +193,7 @@ function install_singularity() {
   ## is always bound. We also check for the existence of a few standard
   ## locations (/scratch /volatile /cache) and bind those too if found
   echo " - Determining additional bind paths"
-  BINDPATH=${SINGULARITY_BINDPATH}${APPTAINER_BINDPATH:+,${APPTAINER_BINDPATH}}
+  BINDPATH=$(echo ${SINGULARITY_BINDPATH},${APPTAINER_BINDPATH} | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
   echo "   --> system bindpath: $BINDPATH"
   PREFIX_ROOT="/$(realpath $PREFIX | cut -d "/" -f2)"
   for dir in /w /work /scratch /volatile /cache /gpfs /gpfs01 /gpfs02 $PREFIX_ROOT; do
