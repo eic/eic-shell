@@ -7,6 +7,7 @@
 ## with the $EIC_SHELL_PREFIX variable pointing
 ## to the $PREFIX/local directory
 
+ORGANIZATION="eicweb"
 CONTAINER="eic_xl"
 VERSION="nightly"
 PREFIX="$PWD"
@@ -14,12 +15,13 @@ PREFIX="$PWD"
 function print_the_help {
   echo "USAGE:  ./install.sh [-p PREFIX] [-v VERSION]"
   echo "OPTIONAL ARGUMENTS:"
-  echo "          -p,--prefix     Working directory to deploy the environment (D: $PREFIX)"
-  echo "          -t,--tmpdir     Change tmp directory (D: $([[ -z "$TMPDIR" ]] && echo "/tmp" || echo "$TMPDIR"))"
-  echo "          -n,--no-cvmfs   Disable check for local CVMFS (D: enabled)"
-  echo "          -c,--container  Container version (D: $CONTAINER)"
-  echo "          -v,--version    Version to install (D: $VERSION)"
-  echo "          -h,--help       Print this message"
+  echo "          -p,--prefix        Working directory to deploy the environment (D: $PREFIX)"
+  echo "          -t,--tmpdir        Change tmp directory (D: $([[ -z "$TMPDIR" ]] && echo "/tmp" || echo "$TMPDIR"))"
+  echo "          -n,--no-cvmfs      Disable check for local CVMFS (D: enabled)"
+  echo "          -o,--organization  Organization (D: $ORGANIZATION) (requires cvmfs)"
+  echo "          -c,--container     Container family (D: $CONTAINER)"
+  echo "          -v,--version       Version to install (D: $VERSION)"
+  echo "          -h,--help          Print this message"
   echo ""
   echo "  Set up containerized development environment."
   echo ""
@@ -136,11 +138,11 @@ function install_singularity() {
   else
     ## check if we can just use cvmfs for the image
     SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}.sif"
-    if [ -z "$DISABLE_CVMFS_USAGE" -a -d /cvmfs/singularity.opensciencegrid.org/eicweb/${CONTAINER}:${VERSION} ]; then
+    if [ -z "$DISABLE_CVMFS_USAGE" -a -d /cvmfs/singularity.opensciencegrid.org/${ORGANIZATION}/${CONTAINER}:${VERSION} ]; then
       SIF="$PREFIX/local/lib/${CONTAINER}-${VERSION}"
       ## need to cleanup in this case, else it will try to make a subdirectory
       rm -rf ${SIF}
-      ln -sf /cvmfs/singularity.opensciencegrid.org/eicweb/${CONTAINER}:${VERSION} ${SIF}
+      ln -sf /cvmfs/singularity.opensciencegrid.org/${ORGANIZATION}/${CONTAINER}:${VERSION} ${SIF}
     elif [ -f /cvmfs/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ]; then
       ln -sf /cvmfs/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ${SIF}
     elif [ -f /gpfs02/cvmfst0/eic.opensciencegrid.org/singularity/athena/${CONTAINER}_v${VERSION}.sif ]; then
@@ -200,6 +202,7 @@ cat << EOF > eic-shell
 #!/bin/bash
 
 ## capture environment setup for upgrades
+ORGANIZATION=$ORGANIZATION
 CONTAINER=$CONTAINER
 TMPDIR=$TMPDIR
 VERSION=$VERSION
@@ -209,11 +212,12 @@ DISABLE_CVMFS_USAGE=${DISABLE_CVMFS_USAGE}
 function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
-  echo "          -u,--upgrade    Upgrade the container to the latest version"
-  echo "          -n,--no-cvmfs   Disable check for local CVMFS when updating. (D: enabled)"
-  echo "          -c,--container  Container version (D: \$CONTAINER) (requires cvmfs)"
-  echo "          -v,--version    Version to install (D: \$VERSION) (requires cvmfs)"
-  echo "          -h,--help       Print this message"
+  echo "          -u,--upgrade       Upgrade the container to the latest version"
+  echo "          -n,--no-cvmfs      Disable check for local CVMFS when updating. (D: enabled)"
+  echo "          -o,--organization  Organization (D: \$ORGANIZATION) (requires cvmfs)"
+  echo "          -c,--container     Container family (D: \$CONTAINER) (requires cvmfs)"
+  echo "          -v,--version       Version to install (D: \$VERSION) (requires cvmfs)"
+  echo "          -h,--help          Print this message"
   echo ""
   echo "  Start the eic-shell containerized software environment (Singularity version)."
   echo ""
@@ -241,13 +245,13 @@ while [ \$# -gt 0 ]; do
       ;;
     -c|--container)
       CONTAINER=\$2
-      export SIF=/cvmfs/singularity.opensciencegrid.org/eicweb/\${CONTAINER}:\${VERSION}
+      export SIF=/cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION}
       shift
       shift
       ;;
     -v|--version)
       VERSION=\$2
-      export SIF=/cvmfs/singularity.opensciencegrid.org/eicweb/\${CONTAINER}:\${VERSION}
+      export SIF=/cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION}
       shift
       shift
       ;;
@@ -269,7 +273,7 @@ done
 
 if [ ! -z \${UPGRADE} ]; then
   echo "Upgrading eic-shell..."
-  if [ -z "\$DISABLE_CVMFS_USAGE" -a -d /cvmfs/singularity.opensciencegrid.org/eicweb/\${CONTAINER}:\${VERSION} ]; then
+  if [ -z "\$DISABLE_CVMFS_USAGE" -a -d /cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION} ]; then
     echo ""
     echo "Note: You cannot manually update the container as you are using the CVMFS version."
     echo "      The container will automatically update every 24 hours."
