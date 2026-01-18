@@ -92,7 +92,7 @@ function install_singularity() {
     SINGULARITY=$(which apptainer)
     SINGULARITY_VERSION=`$SINGULARITY --version`
   fi
-  if [ -z $SINGULARITY ]; then
+  if [ -z "$SINGULARITY" ]; then
     ## check for a singularity install
     ## default to singularity if new enough
     if [ $(type -P singularity ) ]; then
@@ -104,7 +104,7 @@ function install_singularity() {
       fi
     fi
   fi
-  if [ -z $SINGULARITY ]; then
+  if [ -z "$SINGULARITY" ]; then
     ## first priority: a known good install (this one is on JLAB)
     if [ -d "/apps/singularity/3.7.1/bin/" ]; then
       SINGULARITY="/apps/singularity/3.7.1/bin/singularity"
@@ -113,6 +113,7 @@ function install_singularity() {
       SINGULARITY=$(which singularity)
     ## cvmfs apptainer is last resort (sandbox mode can cause issues)
     elif [ -f "/cvmfs/oasis.opensciencegrid.org/mis/apptainer/bin/apptainer" ]; then
+      SINGULARITY="/cvmfs/oasis.opensciencegrid.org/mis/apptainer/bin/apptainer"
     ## cvmfs singularity is last resort (sandbox mode can cause issues)
     elif [ -f "/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity" ]; then
       SINGULARITY="/cvmfs/oasis.opensciencegrid.org/mis/singularity/bin/singularity"
@@ -356,7 +357,7 @@ function install_docker() {
   fi
 
   ## create a new top-level eic-shell launcher script
-  ## that sets the EIC_SHELL_PREFIX and then starts apptainer/singularity
+  ## that sets the EIC_SHELL_PREFIX and then starts docker
 cat << EOF > eic-shell
 #!/bin/bash
 
