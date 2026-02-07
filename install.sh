@@ -33,13 +33,13 @@ while [ $# -gt 0 ]; do
   key=$1
   case $key in
     -p|--prefix)
-      PREFIX=$(realpath $2)
+      PREFIX=$(realpath ${2?Missing argument. Use --help for more info.})
       shift
       shift
       ;;
     -t|--tmpdir)
-      export TMPDIR=$2
-      export SINGULARITY_TMPDIR=$2
+      export TMPDIR=${2?Missing argument. Use --help for more info.}
+      export SINGULARITY_TMPDIR=${2?Missing argument. Use --help for more info.}
       shift
       shift
       ;;
@@ -48,12 +48,12 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     -c|--container)
-      CONTAINER=$2
+      CONTAINER=${2?Missing argument. Use --help for more info.}
       shift
       shift
       ;;
     -v|--version)
-      VERSION=$2
+      VERSION=${2?Missing argument. Use --help for more info.}
       shift
       shift
       ;;
@@ -244,13 +244,13 @@ while [ \$# -gt 0 ]; do
       shift
       ;;
     -c|--container)
-      CONTAINER=\$2
+      CONTAINER=\${2?Missing argument. Use --help for more info.}
       export SIF=/cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION}
       shift
       shift
       ;;
     -v|--version)
-      VERSION=\$2
+      VERSION=\${2?Missing argument. Use --help for more info.}
       export SIF=/cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION}
       shift
       shift
