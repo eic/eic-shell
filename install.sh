@@ -223,7 +223,7 @@ function print_the_help {
   echo ""
   echo "ENVIRONMENT VARIABLES:"
   echo "          SINGULARITY        Path to the singularity executable (D: detected during installation)"
-  echo "          SINGULARITY_OPTIONS Additional options to pass to singularity exec (D: none)"
+  echo "          SINGULARITY_OPTIONS  Additional options to pass to singularity exec (D: none)"
   echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
