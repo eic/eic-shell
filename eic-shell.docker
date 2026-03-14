@@ -1,0 +1,75 @@
+#!/bin/bash
+
+## capture environment setup for upgrades
+CONTAINER=${EICS_CONTAINER}
+TMPDIR=${EICS_TMPDIR}
+VERSION=${EICS_VERSION}
+PREFIX=${EICS_PREFIX}
+DISABLE_CVMFS_USAGE=${EICS_DISABLE_CVMFS_USAGE}
+
+function print_the_help {
+  echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
+  echo "OPTIONAL ARGUMENTS:"
+  echo "          -u,--upgrade    Upgrade the container to the latest version"
+  echo "          --noX           Disable X11 forwarding on macOS"
+  echo "          -h,--help       Print this message"
+  echo ""
+  echo "  Start the eic-shell containerized software environment (Docker version)."
+  echo ""
+  echo "EXAMPLES: "
+  echo "  - Start an interactive shell: ./eic-shell" 
+  echo "  - Upgrade the container:      ./eic-shell --upgrade"
+  echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
+  echo ""
+  exit
+}
+
+UPGRADE=
+NOX=
+while [ $# -gt 0 ]; do
+  key=$1
+  case $key in
+    -u|--upgrade)
+      UPGRADE=1
+      shift
+      ;;
+    --noX)
+      NOX=1
+      shift
+      ;;
+     -h|--help)
+      print_the_help
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      echo "ERROR: unknown argument: $key"
+      echo "use --help for more info"
+      exit 1
+      ;;
+  esac
+done
+
+if [ x${DISPLAY} == "x" ] ; then
+  echo "No X11 display detected, disabling X11"
+  NOX=1
+fi
+
+if [ ! -z ${UPGRADE} ]; then
+  echo "Upgrading eic-shell..."
+  docker pull ${EICS_IMG} || exit 1
+  echo "eic-shell upgrade successful"
+  exit 0
+fi
+
+if [ "$(uname -s)" = 'Darwin' ] && [ ! ${NOX} ]; then
+  nolisten=`defaults find nolisten_tcp | grep nolisten | head -n 1 | awk '{print $3}'|cut -b 1 `
+  [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)."
+  xhost +localhost
+  dispnum=`ps -e |grep Xquartz | grep listen | grep -v xinit |awk '{print $5}'`
+  XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"
+fi
+docker run ${EICS_PLATFORM_FLAG} ${EICS_MOUNT} $XSTUFF -w=$PWD -it --rm -e EIC_SHELL_PREFIX=${EICS_PREFIX}/local ${EICS_IMG} eic-shell $@

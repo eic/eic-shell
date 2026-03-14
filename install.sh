@@ -7,6 +7,8 @@
 ## with the $EIC_SHELL_PREFIX variable pointing
 ## to the $PREFIX/local directory
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 ORGANIZATION="eicweb"
 CONTAINER="eic_xl"
 VERSION="nightly"
@@ -198,119 +200,14 @@ function install_singularity() {
 
   ## create a new top-level eic-shell launcher script
   ## that sets the EIC_SHELL_PREFIX and then starts singularity
-cat << EOF > eic-shell
-#!/bin/bash
-
-## capture environment setup for upgrades
-ORGANIZATION=$ORGANIZATION
-CONTAINER=$CONTAINER
-TMPDIR=$TMPDIR
-VERSION=$VERSION
-PREFIX=$PREFIX
-DISABLE_CVMFS_USAGE=${DISABLE_CVMFS_USAGE}
-
-function print_the_help {
-  echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
-  echo "OPTIONAL ARGUMENTS:"
-  echo "          -u,--upgrade       Upgrade the container to the latest version"
-  echo "          -n,--no-cvmfs      Disable check for local CVMFS when updating. (D: enabled)"
-  echo "          -o,--organization  Organization (D: \$ORGANIZATION) (requires cvmfs)"
-  echo "          -c,--container     Container family (D: \$CONTAINER) (requires cvmfs)"
-  echo "          -v,--version       Version to install (D: \$VERSION) (requires cvmfs)"
-  echo "          -h,--help          Print this message"
-  echo ""
-  echo "  Start the eic-shell containerized software environment (Singularity version)."
-  echo ""
-  echo "ENVIRONMENT VARIABLES:"
-  echo "          SINGULARITY        Path to the singularity executable (D: detected during installation)"
-  echo "          SINGULARITY_OPTIONS  Additional options to pass to singularity exec (D: none)"
-  echo ""
-  echo "EXAMPLES: "
-  echo "  - Start an interactive shell: ./eic-shell" 
-  echo "  - Upgrade the container:      ./eic-shell --upgrade"
-  echo "  - Use different version:      ./eic-shell --version \$(date +%y.%m).0-stable"
-  echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
-  echo "  - Use custom singularity:     SINGULARITY=/path/to/singularity ./eic-shell"
-  echo "  - Pass singularity options:   SINGULARITY_OPTIONS='--nv' ./eic-shell"
-  echo ""
-  exit
-}
-
-UPGRADE=
-
-while [ \$# -gt 0 ]; do
-  key=\$1
-  case \$key in
-    -u|--upgrade)
-      UPGRADE=1
-      shift
-      ;;
-    -n|--no-cvmfs)
-      DISABLE_CVMFS_USAGE=true
-      shift
-      ;;
-    -c|--container)
-      CONTAINER=\${2?Missing argument. Use --help for more info.}
-      export SIF=/cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION}
-      shift
-      shift
-      ;;
-    -v|--version)
-      VERSION=\${2?Missing argument. Use --help for more info.}
-      export SIF=/cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION}
-      shift
-      shift
-      ;;
-    -h|--help)
-      print_the_help
-      exit 0
-      ;;
-    --)
-      shift
-      break
-      ;;
-    *)
-      echo "ERROR: unknown argument: \$key"
-      echo "use --help for more info"
-      exit 1
-      ;;
-  esac
-done
-
-if [ ! -z \${UPGRADE} ]; then
-  echo "Upgrading eic-shell..."
-  if [ -z "\$DISABLE_CVMFS_USAGE" -a -d /cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION} ]; then
-    echo ""
-    echo "Note: You cannot manually update the container as you are using the CVMFS version."
-    echo "      The container will automatically update every 24 hours."
-    echo "      You can override this by setting the '--no-cvmfs' flag, which will"
-    echo "      instantiate a local version."
-    echo "      This is only recommended for expert usage."
-    echo ""
-    echo "This will only upgrade the eic-shell script itself."
-    echo ""
-  fi
-  FLAGS="-p \${PREFIX} -v \${VERSION}"
-  if [ ! -z \${TMPDIR} ]; then
-    FLAGS="\${FLAGS} -t \${TMPDIR}"
-  fi
-  if [ ! -z \${DISABLE_CVMFS_USAGE} ]; then
-    FLAGS="\${FLAGS} --no-cvmfs"
-  fi
-  curl -L https://github.com/eic/eic-shell/raw/main/install.sh \
-    | bash -s -- \${FLAGS}
-  echo "eic-shell upgrade sucessful"
-  exit 0
-fi
-
-export EIC_SHELL_PREFIX=$PREFIX/local
-export SINGULARITY_BINDPATH=$BINDPATH
-\${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell \$@
-EOF
+  export EICS_ORGANIZATION="$ORGANIZATION" EICS_CONTAINER="$CONTAINER" EICS_TMPDIR="$TMPDIR" \
+    EICS_VERSION="$VERSION" EICS_PREFIX="$PREFIX" EICS_DISABLE_CVMFS_USAGE="${DISABLE_CVMFS_USAGE}" \
+    EICS_SINGULARITY="$SINGULARITY" EICS_BINDPATH="$BINDPATH" EICS_SIF="$SIF"
+  envsubst '${EICS_ORGANIZATION} ${EICS_CONTAINER} ${EICS_TMPDIR} ${EICS_VERSION} ${EICS_PREFIX} ${EICS_DISABLE_CVMFS_USAGE} ${EICS_SINGULARITY} ${EICS_BINDPATH} ${EICS_SIF}' < "$SCRIPT_DIR/eic-shell.singularity" > eic-shell
 
   chmod +x eic-shell
 
-  echo " - Created custom eic-shell excecutable"
+  echo " - Created custom eic-shell executable"
 }
 
 function install_docker() {
@@ -350,91 +247,14 @@ function install_docker() {
   fi
 
   ## create a new top-level eic-shell launcher script
-  ## that sets the EIC_SHELL_PREFIX and then starts singularity
-cat << EOF > eic-shell
-#!/bin/bash
-
-## capture environment setup for upgrades
-CONTAINER=$CONTAINER
-TMPDIR=$TMPDIR
-VERSION=$VERSION
-PREFIX=$PREFIX
-DISABLE_CVMFS_USAGE=${DISABLE_CVMFS_USAGE}
-
-function print_the_help {
-  echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
-  echo "OPTIONAL ARGUMENTS:"
-  echo "          -u,--upgrade    Upgrade the container to the latest version"
-  echo "          --noX           Disable X11 forwarding on macOS"
-  echo "          -h,--help       Print this message"
-  echo ""
-  echo "  Start the eic-shell containerized software environment (Docker version)."
-  echo ""
-  echo "EXAMPLES: "
-  echo "  - Start an interactive shell: ./eic-shell" 
-  echo "  - Upgrade the container:      ./eic-shell --upgrade"
-  echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
-  echo ""
-  exit
-}
-
-UPGRADE=
-NOX=
-while [ \$# -gt 0 ]; do
-  key=\$1
-  case \$key in
-    -u|--upgrade)
-      UPGRADE=1
-      shift
-      ;;
-    --noX)
-      NOX=1
-      shift
-      ;;
-     -h|--help)
-      print_the_help
-      exit 0
-      ;;
-    --)
-      shift
-      break
-      ;;
-    *)
-      echo "ERROR: unknown argument: \$key"
-      echo "use --help for more info"
-      exit 1
-      ;;
-  esac
-done
-
-if [ x\${DISPLAY} == "x" ] ; then
-  echo "No X11 display detected, disabling X11"
-  NOX=1
-fi
-
-if [ ! -z \${UPGRADE} ]; then
-  echo "Upgrading eic-shell..."
-  docker pull $IMG || exit 1
-  echo "eic-shell upgrade sucessful"
-  exit 0
-fi
-EOF
-
-  if [ `uname -s` = 'Darwin' ]; then
-      echo 'if [ ! ${NOX} ]; then' >> eic-shell
-      echo ' nolisten=`defaults find nolisten_tcp | grep nolisten | head -n 1 | awk ' "'{print" '$3}'"'" '|cut -b 1 `' >> eic-shell
-      echo ' [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)."' >> eic-shell
-      ## getting the following single and double quotes, escapes and backticks right was a nightmare
-      ## But with a heredoc it was worse
-      echo '  xhost +localhost' >> eic-shell
-      echo '  dispnum=`ps -e |grep Xquartz | grep listen | grep -v xinit |awk ' "'{print" '$5}'"'" '`' >> eic-shell
-      echo '  XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"' >> eic-shell
-      echo 'fi' >> eic-shell
-  fi
-  echo "docker run $PLATFORM_FLAG $MOUNT \$XSTUFF -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@" >> eic-shell
+  ## that sets the EIC_SHELL_PREFIX and then starts docker
+  export EICS_CONTAINER="$CONTAINER" EICS_TMPDIR="$TMPDIR" EICS_VERSION="$VERSION" \
+    EICS_PREFIX="$PREFIX" EICS_DISABLE_CVMFS_USAGE="${DISABLE_CVMFS_USAGE}" \
+    EICS_IMG="$IMG" EICS_PLATFORM_FLAG="$PLATFORM_FLAG" EICS_MOUNT="$MOUNT"
+  envsubst '${EICS_CONTAINER} ${EICS_TMPDIR} ${EICS_VERSION} ${EICS_PREFIX} ${EICS_DISABLE_CVMFS_USAGE} ${EICS_IMG} ${EICS_PLATFORM_FLAG} ${EICS_MOUNT}' < "$SCRIPT_DIR/eic-shell.docker" > eic-shell
 
   chmod +x eic-shell
-  echo " - Created custom eic-shell excecutable"
+  echo " - Created custom eic-shell executable"
 }
 
 ## detect OS
