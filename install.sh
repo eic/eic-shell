@@ -221,11 +221,17 @@ function print_the_help {
   echo ""
   echo "  Start the eic-shell containerized software environment (Singularity version)."
   echo ""
+  echo "ENVIRONMENT VARIABLES:"
+  echo "          SINGULARITY        Path to the singularity executable (D: detected during installation)"
+  echo "          SINGULARITY_OPTIONS  Additional options to pass to singularity exec (D: none)"
+  echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
   echo "  - Upgrade the container:      ./eic-shell --upgrade"
   echo "  - Use different version:      ./eic-shell --version \$(date +%y.%m).0-stable"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
+  echo "  - Use custom singularity:     SINGULARITY=/path/to/singularity ./eic-shell"
+  echo "  - Pass singularity options:   SINGULARITY_OPTIONS='--nv' ./eic-shell"
   echo ""
   exit
 }
