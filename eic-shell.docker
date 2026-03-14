@@ -1,11 +1,17 @@
 #!/bin/bash
 
-## capture environment setup for upgrades
-CONTAINER=${EICS_CONTAINER}
-TMPDIR=${EICS_TMPDIR}
-VERSION=${EICS_VERSION}
-PREFIX=${EICS_PREFIX}
-DISABLE_CVMFS_USAGE=${EICS_DISABLE_CVMFS_USAGE}
+## eic-shell Docker launcher
+## Install-time values are baked in by install.sh via a preamble prepended to this file.
+## The defaults below allow running this file directly for testing; override by
+## setting the corresponding environment variables before execution.
+: "${CONTAINER:=eic_xl}"
+: "${TMPDIR:=}"
+: "${VERSION:=nightly}"
+: "${PREFIX:=$PWD}"
+: "${DISABLE_CVMFS_USAGE:=}"
+: "${IMG:=eicweb/eic_xl:nightly}"
+: "${PLATFORM_FLAG:=}"
+: "${MOUNT:=}"
 
 function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
@@ -58,18 +64,18 @@ if [ x${DISPLAY} == "x" ] ; then
   NOX=1
 fi
 
-if [ ! -z ${UPGRADE} ]; then
+if [[ -n "$UPGRADE" ]]; then
   echo "Upgrading eic-shell..."
-  docker pull ${EICS_IMG} || exit 1
+  docker pull ${IMG} || exit 1
   echo "eic-shell upgrade successful"
   exit 0
 fi
 
-if [ "$(uname -s)" = 'Darwin' ] && [ ! ${NOX} ]; then
+if [ "$(uname -s)" = 'Darwin' ] && [[ -z "$NOX" ]]; then
   nolisten=`defaults find nolisten_tcp | grep nolisten | head -n 1 | awk '{print $3}'|cut -b 1 `
   [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)."
   xhost +localhost
   dispnum=`ps -e |grep Xquartz | grep listen | grep -v xinit |awk '{print $5}'`
   XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"
 fi
-docker run ${EICS_PLATFORM_FLAG} ${EICS_MOUNT} $XSTUFF -w=$PWD -it --rm -e EIC_SHELL_PREFIX=${EICS_PREFIX}/local ${EICS_IMG} eic-shell $@
+docker run ${PLATFORM_FLAG} ${MOUNT} ${XSTUFF} -w=$PWD -it --rm -e EIC_SHELL_PREFIX=${PREFIX}/local ${IMG} eic-shell "$@"

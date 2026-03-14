@@ -200,10 +200,19 @@ function install_singularity() {
 
   ## create a new top-level eic-shell launcher script
   ## that sets the EIC_SHELL_PREFIX and then starts singularity
-  export EICS_ORGANIZATION="$ORGANIZATION" EICS_CONTAINER="$CONTAINER" EICS_TMPDIR="$TMPDIR" \
-    EICS_VERSION="$VERSION" EICS_PREFIX="$PREFIX" EICS_DISABLE_CVMFS_USAGE="${DISABLE_CVMFS_USAGE}" \
-    EICS_SINGULARITY="$SINGULARITY" EICS_BINDPATH="$BINDPATH" EICS_SIF="$SIF"
-  envsubst '${EICS_ORGANIZATION} ${EICS_CONTAINER} ${EICS_TMPDIR} ${EICS_VERSION} ${EICS_PREFIX} ${EICS_DISABLE_CVMFS_USAGE} ${EICS_SINGULARITY} ${EICS_BINDPATH} ${EICS_SIF}' < "$SCRIPT_DIR/eic-shell.singularity" > eic-shell
+  cat > eic-shell << PREAMBLE
+#!/bin/bash
+ORGANIZATION="$ORGANIZATION"
+CONTAINER="$CONTAINER"
+TMPDIR="${TMPDIR:-}"
+VERSION="$VERSION"
+PREFIX="$PREFIX"
+DISABLE_CVMFS_USAGE="${DISABLE_CVMFS_USAGE:-}"
+INSTALLED_SINGULARITY="$SINGULARITY"
+BINDPATH="$BINDPATH"
+INSTALLED_SIF="$SIF"
+PREAMBLE
+  tail -n +2 "$SCRIPT_DIR/eic-shell.singularity" >> eic-shell
 
   chmod +x eic-shell
 
@@ -248,10 +257,18 @@ function install_docker() {
 
   ## create a new top-level eic-shell launcher script
   ## that sets the EIC_SHELL_PREFIX and then starts docker
-  export EICS_CONTAINER="$CONTAINER" EICS_TMPDIR="$TMPDIR" EICS_VERSION="$VERSION" \
-    EICS_PREFIX="$PREFIX" EICS_DISABLE_CVMFS_USAGE="${DISABLE_CVMFS_USAGE}" \
-    EICS_IMG="$IMG" EICS_PLATFORM_FLAG="$PLATFORM_FLAG" EICS_MOUNT="$MOUNT"
-  envsubst '${EICS_CONTAINER} ${EICS_TMPDIR} ${EICS_VERSION} ${EICS_PREFIX} ${EICS_DISABLE_CVMFS_USAGE} ${EICS_IMG} ${EICS_PLATFORM_FLAG} ${EICS_MOUNT}' < "$SCRIPT_DIR/eic-shell.docker" > eic-shell
+  cat > eic-shell << PREAMBLE
+#!/bin/bash
+CONTAINER="$CONTAINER"
+TMPDIR="${TMPDIR:-}"
+VERSION="$VERSION"
+PREFIX="$PREFIX"
+DISABLE_CVMFS_USAGE="${DISABLE_CVMFS_USAGE:-}"
+IMG="$IMG"
+PLATFORM_FLAG="$PLATFORM_FLAG"
+MOUNT="$MOUNT"
+PREAMBLE
+  tail -n +2 "$SCRIPT_DIR/eic-shell.docker" >> eic-shell
 
   chmod +x eic-shell
   echo " - Created custom eic-shell executable"

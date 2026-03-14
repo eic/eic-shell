@@ -1,19 +1,24 @@
 #!/bin/bash
 
-## capture environment setup for upgrades
-ORGANIZATION=${EICS_ORGANIZATION}
-CONTAINER=${EICS_CONTAINER}
-TMPDIR=${EICS_TMPDIR}
-VERSION=${EICS_VERSION}
-PREFIX=${EICS_PREFIX}
-DISABLE_CVMFS_USAGE=${EICS_DISABLE_CVMFS_USAGE}
+## eic-shell Singularity launcher
+## Install-time values are baked in by install.sh via a preamble prepended to this file.
+## The defaults below allow running this file directly for testing; override by
+## setting the corresponding environment variables before execution.
+: "${ORGANIZATION:=eicweb}"
+: "${CONTAINER:=eic_xl}"
+: "${TMPDIR:=}"
+: "${VERSION:=nightly}"
+: "${PREFIX:=$PWD}"
+: "${DISABLE_CVMFS_USAGE:=}"
+: "${INSTALLED_SINGULARITY:=singularity}"
+: "${BINDPATH:=}"
+: "${INSTALLED_SIF:=}"
 
 function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade       Upgrade the container to the latest version"
   echo "          -n,--no-cvmfs      Disable check for local CVMFS when updating. (D: enabled)"
-  echo "          -o,--organization  Organization (D: $ORGANIZATION) (requires cvmfs)"
   echo "          -c,--container     Container family (D: $CONTAINER) (requires cvmfs)"
   echo "          -v,--version       Version to install (D: $VERSION) (requires cvmfs)"
   echo "          -h,--help          Print this message"
@@ -21,7 +26,7 @@ function print_the_help {
   echo "  Start the eic-shell containerized software environment (Singularity version)."
   echo ""
   echo "ENVIRONMENT VARIABLES:"
-  echo "          SINGULARITY        Path to the singularity executable (D: detected during installation)"
+  echo "          SINGULARITY          Path to the singularity executable (D: $INSTALLED_SINGULARITY)"
   echo "          SINGULARITY_OPTIONS  Additional options to pass to singularity exec (D: none)"
   echo ""
   echo "EXAMPLES: "
@@ -76,7 +81,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ ! -z ${UPGRADE} ]; then
+if [[ -n "$UPGRADE" ]]; then
   echo "Upgrading eic-shell..."
   if [ -z "$DISABLE_CVMFS_USAGE" -a -d /cvmfs/singularity.opensciencegrid.org/${ORGANIZATION}/${CONTAINER}:${VERSION} ]; then
     echo ""
@@ -90,18 +95,18 @@ if [ ! -z ${UPGRADE} ]; then
     echo ""
   fi
   FLAGS="-p ${PREFIX} -v ${VERSION}"
-  if [ ! -z ${TMPDIR} ]; then
+  if [[ -n "$TMPDIR" ]]; then
     FLAGS="${FLAGS} -t ${TMPDIR}"
   fi
-  if [ ! -z ${DISABLE_CVMFS_USAGE} ]; then
+  if [[ -n "$DISABLE_CVMFS_USAGE" ]]; then
     FLAGS="${FLAGS} --no-cvmfs"
   fi
-  curl -L https://github.com/eic/eic-shell/raw/main/install.sh \
+  curl -L https://eic.github.io/eic-shell/install.sh \
     | bash -s -- ${FLAGS}
   echo "eic-shell upgrade successful"
   exit 0
 fi
 
-export EIC_SHELL_PREFIX=${EICS_PREFIX}/local
-export SINGULARITY_BINDPATH=${EICS_BINDPATH}
-${SINGULARITY:-${EICS_SINGULARITY}} exec ${SINGULARITY_OPTIONS:-} ${SIF:-${EICS_SIF}} eic-shell $@
+export EIC_SHELL_PREFIX=${PREFIX}/local
+export SINGULARITY_BINDPATH=${BINDPATH}
+${SINGULARITY:-${INSTALLED_SINGULARITY}} exec ${SINGULARITY_OPTIONS:-} ${SIF:-${INSTALLED_SIF}} eic-shell "$@"
