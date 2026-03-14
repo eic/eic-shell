@@ -222,7 +222,7 @@ function print_the_help {
   echo "  Start the eic-shell containerized software environment (Singularity version)."
   echo ""
   echo "ENVIRONMENT VARIABLES:"
-  echo "          SINGULARITY        Path to the singularity executable (D: auto-detected)"
+  echo "          SINGULARITY        Path to the singularity executable (D: detected during installation)"
   echo "          SINGULARITY_OPTIONS Additional options to pass to singularity exec (D: none)"
   echo ""
   echo "EXAMPLES: "
