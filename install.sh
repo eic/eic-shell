@@ -209,10 +209,137 @@ VERSION=$VERSION
 PREFIX=$PREFIX
 DISABLE_CVMFS_USAGE=${DISABLE_CVMFS_USAGE}
 
+## version check configuration
+EIC_SHELL_REPO="eic/eic-shell"
+INSTALL_URL="https://get.epic-eic.org"
+CHECK_INTERVAL_DAYS=1
+NETWORK_TIMEOUT=5
+
+function read_metadata() {
+  local metadata_file="\${PREFIX}/.eic-shell-metadata"
+  if [ -f "\${metadata_file}" ]; then
+    source "\${metadata_file}"
+  fi
+}
+
+function check_local_modifications() {
+  local eic_shell_script="\${PREFIX}/eic-shell"
+  if [ -z "\${EIC_SHELL_ORIGINAL_MTIME}" ]; then
+    return 1
+  fi
+  local current_mtime
+  current_mtime=\$(stat -c %Y "\${eic_shell_script}" 2>/dev/null || stat -f %m "\${eic_shell_script}" 2>/dev/null || echo 0)
+  if [ "\${current_mtime}" != "\${EIC_SHELL_ORIGINAL_MTIME}" ]; then
+    return 0
+  fi
+  return 1
+}
+
+function should_check_version() {
+  local cache_file="\${PREFIX}/.eic-shell-version-check"
+  if [ ! -f "\${cache_file}" ]; then
+    return 0
+  fi
+  local last_check
+  last_check=\$(grep '^LAST_CHECK=' "\${cache_file}" 2>/dev/null | cut -d= -f2)
+  last_check=\${last_check:-0}
+  local now
+  now=\$(date +%s)
+  local age=\$(( now - last_check ))
+  if [ \$age -ge \$(( CHECK_INTERVAL_DAYS * 86400 )) ]; then
+    return 0
+  fi
+  return 1
+}
+
+function fetch_latest_release() {
+  local result
+  result=\$(curl -s --connect-timeout \${NETWORK_TIMEOUT} --max-time \${NETWORK_TIMEOUT} \
+    "https://api.github.com/repos/\${EIC_SHELL_REPO}/releases/latest" 2>/dev/null \
+    | grep '"tag_name":' \
+    | sed -E 's/.*"([^"]+)".*/\1/')
+  if [[ "\${result}" =~ ^[0-9a-zA-Z._-]+\$ ]]; then
+    echo "\${result}"
+  fi
+}
+
+function cache_version_check() {
+  local latest_version="\$1"
+  local check_status="\$2"
+  local has_local_mods="\$3"
+  local cache_file="\${PREFIX}/.eic-shell-version-check"
+  {
+    echo "LAST_CHECK=\$(date +%s)"
+    echo "LAST_CHECK_DATE=\"\$(date)\""
+    echo "LATEST_VERSION=\${latest_version}"
+    echo "CHECK_STATUS=\${check_status}"
+    echo "HAS_LOCAL_MODIFICATIONS=\${has_local_mods}"
+  } > "\${cache_file}"
+}
+
+function read_cached_version() {
+  local cache_file="\${PREFIX}/.eic-shell-version-check"
+  if [ -f "\${cache_file}" ]; then
+    grep '^LATEST_VERSION=' "\${cache_file}" 2>/dev/null | cut -d= -f2
+  fi
+}
+
+function read_cached_modification_status() {
+  local cache_file="\${PREFIX}/.eic-shell-version-check"
+  if [ -f "\${cache_file}" ]; then
+    grep '^HAS_LOCAL_MODIFICATIONS=' "\${cache_file}" 2>/dev/null | cut -d= -f2
+  fi
+}
+
+function display_update_notification() {
+  local current="\$1"
+  local latest="\$2"
+  local has_mods="\$3"
+  if [ "\${has_mods}" = "yes" ]; then
+    echo "eic-shell update available (\${current} -> \${latest}), but local modifications detected. Reinstall with: curl -L \${INSTALL_URL} | bash"
+  else
+    echo "eic-shell update available (\${current} -> \${latest}). Run './eic-shell --upgrade' to update."
+  fi
+}
+
+function check_for_updates() {
+  read_metadata
+  local current_version="\${INSTALLED_VERSION:-unknown}"
+  local has_mods="no"
+  if check_local_modifications; then
+    has_mods="yes"
+  fi
+  if ! should_check_version; then
+    local cached_latest
+    cached_latest=\$(read_cached_version)
+    local cached_mods
+    cached_mods=\$(read_cached_modification_status)
+    if [ -n "\${cached_latest}" ] && [ "\${cached_latest}" != "\${current_version}" ] && [ "\${current_version}" != "unknown" ]; then
+      display_update_notification "\${current_version}" "\${cached_latest}" "\${cached_mods:-\${has_mods}}"
+    fi
+    return
+  fi
+  local latest_version
+  latest_version=\$(fetch_latest_release)
+  if [ -n "\${latest_version}" ]; then
+    cache_version_check "\${latest_version}" "success" "\${has_mods}"
+    if [ "\${latest_version}" != "\${current_version}" ] && [ "\${current_version}" != "unknown" ]; then
+      display_update_notification "\${current_version}" "\${latest_version}" "\${has_mods}"
+    fi
+  else
+    cache_version_check "" "offline" "\${has_mods}"
+  fi
+}
+
+function check_for_updates_async() {
+  ( check_for_updates 2>/dev/null & )
+}
+
 function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
-  echo "          -u,--upgrade       Upgrade the container to the latest version"
+  echo "          -u,--upgrade       Upgrade eic-shell to the latest version"
+  echo "          --check-updates    Check for available eic-shell updates"
   echo "          -n,--no-cvmfs      Disable check for local CVMFS when updating. (D: enabled)"
   echo "          -o,--organization  Organization (D: \$ORGANIZATION) (requires cvmfs)"
   echo "          -c,--container     Container family (D: \$CONTAINER) (requires cvmfs)"
@@ -227,7 +354,8 @@ function print_the_help {
   echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
-  echo "  - Upgrade the container:      ./eic-shell --upgrade"
+  echo "  - Upgrade eic-shell:          ./eic-shell --upgrade"
+  echo "  - Check for updates:          ./eic-shell --check-updates"
   echo "  - Use different version:      ./eic-shell --version \$(date +%y.%m).0-stable"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
   echo "  - Use custom singularity:     SINGULARITY=/path/to/singularity ./eic-shell"
@@ -237,12 +365,17 @@ function print_the_help {
 }
 
 UPGRADE=
+CHECK_UPDATES=
 
 while [ \$# -gt 0 ]; do
   key=\$1
   case \$key in
     -u|--upgrade)
       UPGRADE=1
+      shift
+      ;;
+    --check-updates)
+      CHECK_UPDATES=1
       shift
       ;;
     -n|--no-cvmfs)
@@ -277,7 +410,36 @@ while [ \$# -gt 0 ]; do
   esac
 done
 
+if [ -n "\${CHECK_UPDATES}" ]; then
+  read_metadata
+  rm -f "\${PREFIX}/.eic-shell-version-check"
+  current_version="\${INSTALLED_VERSION:-unknown}"
+  latest_version=\$(fetch_latest_release)
+  if [ -n "\${latest_version}" ]; then
+    if [ "\${latest_version}" = "\${current_version}" ]; then
+      echo "eic-shell is up to date (version: \${current_version})"
+    elif [ "\${current_version}" = "unknown" ]; then
+      echo "eic-shell latest version: \${latest_version} (installed version unknown)"
+    else
+      has_mods="no"
+      if check_local_modifications; then
+        has_mods="yes"
+      fi
+      display_update_notification "\${current_version}" "\${latest_version}" "\${has_mods}"
+    fi
+  else
+    echo "eic-shell update check failed (network unavailable). Current version: \${current_version}"
+  fi
+  exit 0
+fi
+
 if [ ! -z \${UPGRADE} ]; then
+  read_metadata
+  if check_local_modifications; then
+    echo "ERROR: Local modifications to eic-shell detected. Cannot upgrade automatically."
+    echo "Reinstall with: curl -L \${INSTALL_URL} | bash"
+    exit 1
+  fi
   echo "Upgrading eic-shell..."
   if [ -z "\$DISABLE_CVMFS_USAGE" -a -d /cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION} ]; then
     echo ""
@@ -290,18 +452,20 @@ if [ ! -z \${UPGRADE} ]; then
     echo "This will only upgrade the eic-shell script itself."
     echo ""
   fi
-  FLAGS="-p \${PREFIX} -v \${VERSION}"
+  FLAGS="-p \${PREFIX} -v \${VERSION} -c \${CONTAINER}"
   if [ ! -z \${TMPDIR} ]; then
     FLAGS="\${FLAGS} -t \${TMPDIR}"
   fi
   if [ ! -z \${DISABLE_CVMFS_USAGE} ]; then
     FLAGS="\${FLAGS} --no-cvmfs"
   fi
-  curl -L https://github.com/eic/eic-shell/raw/main/install.sh \
+  curl -L \${INSTALL_URL} \
     | bash -s -- \${FLAGS}
-  echo "eic-shell upgrade sucessful"
+  echo "eic-shell upgrade successful"
   exit 0
 fi
+
+check_for_updates_async
 
 export EIC_SHELL_PREFIX=$PREFIX/local
 export SINGULARITY_BINDPATH=$BINDPATH
@@ -350,7 +514,7 @@ function install_docker() {
   fi
 
   ## create a new top-level eic-shell launcher script
-  ## that sets the EIC_SHELL_PREFIX and then starts singularity
+  ## that sets the EIC_SHELL_PREFIX and then starts docker
 cat << EOF > eic-shell
 #!/bin/bash
 
@@ -361,10 +525,137 @@ VERSION=$VERSION
 PREFIX=$PREFIX
 DISABLE_CVMFS_USAGE=${DISABLE_CVMFS_USAGE}
 
+## version check configuration
+EIC_SHELL_REPO="eic/eic-shell"
+INSTALL_URL="https://get.epic-eic.org"
+CHECK_INTERVAL_DAYS=1
+NETWORK_TIMEOUT=5
+
+function read_metadata() {
+  local metadata_file="\${PREFIX}/.eic-shell-metadata"
+  if [ -f "\${metadata_file}" ]; then
+    source "\${metadata_file}"
+  fi
+}
+
+function check_local_modifications() {
+  local eic_shell_script="\${PREFIX}/eic-shell"
+  if [ -z "\${EIC_SHELL_ORIGINAL_MTIME}" ]; then
+    return 1
+  fi
+  local current_mtime
+  current_mtime=\$(stat -c %Y "\${eic_shell_script}" 2>/dev/null || stat -f %m "\${eic_shell_script}" 2>/dev/null || echo 0)
+  if [ "\${current_mtime}" != "\${EIC_SHELL_ORIGINAL_MTIME}" ]; then
+    return 0
+  fi
+  return 1
+}
+
+function should_check_version() {
+  local cache_file="\${PREFIX}/.eic-shell-version-check"
+  if [ ! -f "\${cache_file}" ]; then
+    return 0
+  fi
+  local last_check
+  last_check=\$(grep '^LAST_CHECK=' "\${cache_file}" 2>/dev/null | cut -d= -f2)
+  last_check=\${last_check:-0}
+  local now
+  now=\$(date +%s)
+  local age=\$(( now - last_check ))
+  if [ \$age -ge \$(( CHECK_INTERVAL_DAYS * 86400 )) ]; then
+    return 0
+  fi
+  return 1
+}
+
+function fetch_latest_release() {
+  local result
+  result=\$(curl -s --connect-timeout \${NETWORK_TIMEOUT} --max-time \${NETWORK_TIMEOUT} \
+    "https://api.github.com/repos/\${EIC_SHELL_REPO}/releases/latest" 2>/dev/null \
+    | grep '"tag_name":' \
+    | sed -E 's/.*"([^"]+)".*/\1/')
+  if [[ "\${result}" =~ ^[0-9a-zA-Z._-]+\$ ]]; then
+    echo "\${result}"
+  fi
+}
+
+function cache_version_check() {
+  local latest_version="\$1"
+  local check_status="\$2"
+  local has_local_mods="\$3"
+  local cache_file="\${PREFIX}/.eic-shell-version-check"
+  {
+    echo "LAST_CHECK=\$(date +%s)"
+    echo "LAST_CHECK_DATE=\"\$(date)\""
+    echo "LATEST_VERSION=\${latest_version}"
+    echo "CHECK_STATUS=\${check_status}"
+    echo "HAS_LOCAL_MODIFICATIONS=\${has_local_mods}"
+  } > "\${cache_file}"
+}
+
+function read_cached_version() {
+  local cache_file="\${PREFIX}/.eic-shell-version-check"
+  if [ -f "\${cache_file}" ]; then
+    grep '^LATEST_VERSION=' "\${cache_file}" 2>/dev/null | cut -d= -f2
+  fi
+}
+
+function read_cached_modification_status() {
+  local cache_file="\${PREFIX}/.eic-shell-version-check"
+  if [ -f "\${cache_file}" ]; then
+    grep '^HAS_LOCAL_MODIFICATIONS=' "\${cache_file}" 2>/dev/null | cut -d= -f2
+  fi
+}
+
+function display_update_notification() {
+  local current="\$1"
+  local latest="\$2"
+  local has_mods="\$3"
+  if [ "\${has_mods}" = "yes" ]; then
+    echo "eic-shell update available (\${current} -> \${latest}), but local modifications detected. Reinstall with: curl -L \${INSTALL_URL} | bash"
+  else
+    echo "eic-shell update available (\${current} -> \${latest}). Run './eic-shell --upgrade' to update."
+  fi
+}
+
+function check_for_updates() {
+  read_metadata
+  local current_version="\${INSTALLED_VERSION:-unknown}"
+  local has_mods="no"
+  if check_local_modifications; then
+    has_mods="yes"
+  fi
+  if ! should_check_version; then
+    local cached_latest
+    cached_latest=\$(read_cached_version)
+    local cached_mods
+    cached_mods=\$(read_cached_modification_status)
+    if [ -n "\${cached_latest}" ] && [ "\${cached_latest}" != "\${current_version}" ] && [ "\${current_version}" != "unknown" ]; then
+      display_update_notification "\${current_version}" "\${cached_latest}" "\${cached_mods:-\${has_mods}}"
+    fi
+    return
+  fi
+  local latest_version
+  latest_version=\$(fetch_latest_release)
+  if [ -n "\${latest_version}" ]; then
+    cache_version_check "\${latest_version}" "success" "\${has_mods}"
+    if [ "\${latest_version}" != "\${current_version}" ] && [ "\${current_version}" != "unknown" ]; then
+      display_update_notification "\${current_version}" "\${latest_version}" "\${has_mods}"
+    fi
+  else
+    cache_version_check "" "offline" "\${has_mods}"
+  fi
+}
+
+function check_for_updates_async() {
+  ( check_for_updates 2>/dev/null & )
+}
+
 function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
-  echo "          -u,--upgrade    Upgrade the container to the latest version"
+  echo "          -u,--upgrade    Upgrade eic-shell to the latest version"
+  echo "          --check-updates Check for available eic-shell updates"
   echo "          --noX           Disable X11 forwarding on macOS"
   echo "          -h,--help       Print this message"
   echo ""
@@ -372,13 +663,15 @@ function print_the_help {
   echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
-  echo "  - Upgrade the container:      ./eic-shell --upgrade"
+  echo "  - Upgrade eic-shell:          ./eic-shell --upgrade"
+  echo "  - Check for updates:          ./eic-shell --check-updates"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
   echo ""
   exit
 }
 
 UPGRADE=
+CHECK_UPDATES=
 NOX=
 while [ \$# -gt 0 ]; do
   key=\$1
@@ -387,11 +680,15 @@ while [ \$# -gt 0 ]; do
       UPGRADE=1
       shift
       ;;
+    --check-updates)
+      CHECK_UPDATES=1
+      shift
+      ;;
     --noX)
       NOX=1
       shift
       ;;
-     -h|--help)
+    -h|--help)
       print_the_help
       exit 0
       ;;
@@ -412,12 +709,49 @@ if [ x\${DISPLAY} == "x" ] ; then
   NOX=1
 fi
 
-if [ ! -z \${UPGRADE} ]; then
-  echo "Upgrading eic-shell..."
-  docker pull $IMG || exit 1
-  echo "eic-shell upgrade sucessful"
+if [ -n "\${CHECK_UPDATES}" ]; then
+  read_metadata
+  rm -f "\${PREFIX}/.eic-shell-version-check"
+  current_version="\${INSTALLED_VERSION:-unknown}"
+  latest_version=\$(fetch_latest_release)
+  if [ -n "\${latest_version}" ]; then
+    if [ "\${latest_version}" = "\${current_version}" ]; then
+      echo "eic-shell is up to date (version: \${current_version})"
+    elif [ "\${current_version}" = "unknown" ]; then
+      echo "eic-shell latest version: \${latest_version} (installed version unknown)"
+    else
+      has_mods="no"
+      if check_local_modifications; then
+        has_mods="yes"
+      fi
+      display_update_notification "\${current_version}" "\${latest_version}" "\${has_mods}"
+    fi
+  else
+    echo "eic-shell update check failed (network unavailable). Current version: \${current_version}"
+  fi
   exit 0
 fi
+
+if [ ! -z \${UPGRADE} ]; then
+  read_metadata
+  if check_local_modifications; then
+    echo "ERROR: Local modifications to eic-shell detected. Cannot upgrade automatically."
+    echo "Reinstall with: curl -L \${INSTALL_URL} | bash"
+    exit 1
+  fi
+  echo "Upgrading eic-shell..."
+  FLAGS="-p \${PREFIX} -v \${VERSION} -c \${CONTAINER}"
+  if [ ! -z \${TMPDIR} ]; then
+    FLAGS="\${FLAGS} -t \${TMPDIR}"
+  fi
+  curl -L \${INSTALL_URL} \
+    | bash -s -- \${FLAGS}
+  echo "eic-shell upgrade successful"
+  exit 0
+fi
+
+check_for_updates_async
+
 EOF
 
   if [ `uname -s` = 'Darwin' ]; then
@@ -460,6 +794,24 @@ case ${OS} in
     exit 1
     ;;
 esac
+
+## create metadata file for version tracking
+EIC_SHELL_MTIME=$(stat -c %Y "${PREFIX}/eic-shell" 2>/dev/null || stat -f %m "${PREFIX}/eic-shell" 2>/dev/null || echo 0)
+INSTALLED_VERSION=$(curl -s --connect-timeout 5 --max-time 5 \
+  "https://api.github.com/repos/eic/eic-shell/releases/latest" 2>/dev/null \
+  | grep '"tag_name":' \
+  | sed -E 's/.*"([^"]+)".*/\1/')
+if [[ ! "$INSTALLED_VERSION" =~ ^[0-9a-zA-Z._-]+$ ]]; then
+  INSTALLED_VERSION="unknown"
+fi
+{
+  echo "INSTALLED_VERSION=$INSTALLED_VERSION"
+  echo "INSTALLED_DATE=$(date +%s)"
+  echo "CONTAINER=$CONTAINER"
+  echo "ORGANIZATION=$ORGANIZATION"
+  echo "EIC_SHELL_ORIGINAL_MTIME=$EIC_SHELL_MTIME"
+} > "${PREFIX}/.eic-shell-metadata"
+echo " - Installed eic-shell version: $INSTALLED_VERSION"
 
 popd
 echo "Environment setup succesfull"
