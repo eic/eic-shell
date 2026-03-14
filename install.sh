@@ -339,11 +339,10 @@ function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade       Upgrade eic-shell to the latest version"
-  echo "          --check-updates    Check for available eic-shell updates"
   echo "          -n,--no-cvmfs      Disable check for local CVMFS when updating. (D: enabled)"
   echo "          -o,--organization  Organization (D: \$ORGANIZATION) (requires cvmfs)"
   echo "          -c,--container     Container family (D: \$CONTAINER) (requires cvmfs)"
-  echo "          -v,--version       Version to install (D: \$VERSION) (requires cvmfs)"
+  echo "          -v,--version       Print version info, or set version to install (requires cvmfs)"
   echo "          -h,--help          Print this message"
   echo ""
   echo "  Start the eic-shell containerized software environment (Singularity version)."
@@ -355,7 +354,7 @@ function print_the_help {
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
   echo "  - Upgrade eic-shell:          ./eic-shell --upgrade"
-  echo "  - Check for updates:          ./eic-shell --check-updates"
+  echo "  - Print version info:         ./eic-shell --version"
   echo "  - Use different version:      ./eic-shell --version \$(date +%y.%m).0-stable"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
   echo "  - Use custom singularity:     SINGULARITY=/path/to/singularity ./eic-shell"
@@ -365,17 +364,12 @@ function print_the_help {
 }
 
 UPGRADE=
-CHECK_UPDATES=
 
 while [ \$# -gt 0 ]; do
   key=\$1
   case \$key in
     -u|--upgrade)
       UPGRADE=1
-      shift
-      ;;
-    --check-updates)
-      CHECK_UPDATES=1
       shift
       ;;
     -n|--no-cvmfs)
@@ -389,7 +383,12 @@ while [ \$# -gt 0 ]; do
       shift
       ;;
     -v|--version)
-      VERSION=\${2?Missing argument. Use --help for more info.}
+      if [ -z "\${2-}" ] || [[ "\${2}" == -* ]]; then
+        read_metadata
+        echo "container: \${CONTAINER}:\${VERSION} version: \${INSTALLED_VERSION:-unknown}"
+        exit 0
+      fi
+      VERSION=\${2}
       export SIF=/cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION}
       shift
       shift
@@ -409,29 +408,6 @@ while [ \$# -gt 0 ]; do
       ;;
   esac
 done
-
-if [ -n "\${CHECK_UPDATES}" ]; then
-  read_metadata
-  rm -f "\${PREFIX}/.eic-shell-version-check"
-  current_version="\${INSTALLED_VERSION:-unknown}"
-  latest_version=\$(fetch_latest_release)
-  if [ -n "\${latest_version}" ]; then
-    if [ "\${latest_version}" = "\${current_version}" ]; then
-      echo "eic-shell is up to date (version: \${current_version})"
-    elif [ "\${current_version}" = "unknown" ]; then
-      echo "eic-shell latest version: \${latest_version} (installed version unknown)"
-    else
-      has_mods="no"
-      if check_local_modifications; then
-        has_mods="yes"
-      fi
-      display_update_notification "\${current_version}" "\${latest_version}" "\${has_mods}"
-    fi
-  else
-    echo "eic-shell update check failed (network unavailable). Current version: \${current_version}"
-  fi
-  exit 0
-fi
 
 if [ ! -z \${UPGRADE} ]; then
   read_metadata
@@ -655,7 +631,7 @@ function print_the_help {
   echo "USAGE:  ./eic-shell [OPTIONS] [ -- COMMAND ]"
   echo "OPTIONAL ARGUMENTS:"
   echo "          -u,--upgrade    Upgrade eic-shell to the latest version"
-  echo "          --check-updates Check for available eic-shell updates"
+  echo "          -v,--version    Print version info"
   echo "          --noX           Disable X11 forwarding on macOS"
   echo "          -h,--help       Print this message"
   echo ""
@@ -664,14 +640,13 @@ function print_the_help {
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
   echo "  - Upgrade eic-shell:          ./eic-shell --upgrade"
-  echo "  - Check for updates:          ./eic-shell --check-updates"
+  echo "  - Print version info:         ./eic-shell --version"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
   echo ""
   exit
 }
 
 UPGRADE=
-CHECK_UPDATES=
 NOX=
 while [ \$# -gt 0 ]; do
   key=\$1
@@ -680,9 +655,10 @@ while [ \$# -gt 0 ]; do
       UPGRADE=1
       shift
       ;;
-    --check-updates)
-      CHECK_UPDATES=1
-      shift
+    -v|--version)
+      read_metadata
+      echo "container: \${CONTAINER}:\${VERSION} version: \${INSTALLED_VERSION:-unknown}"
+      exit 0
       ;;
     --noX)
       NOX=1
@@ -707,29 +683,6 @@ done
 if [ x\${DISPLAY} == "x" ] ; then
   echo "No X11 display detected, disabling X11"
   NOX=1
-fi
-
-if [ -n "\${CHECK_UPDATES}" ]; then
-  read_metadata
-  rm -f "\${PREFIX}/.eic-shell-version-check"
-  current_version="\${INSTALLED_VERSION:-unknown}"
-  latest_version=\$(fetch_latest_release)
-  if [ -n "\${latest_version}" ]; then
-    if [ "\${latest_version}" = "\${current_version}" ]; then
-      echo "eic-shell is up to date (version: \${current_version})"
-    elif [ "\${current_version}" = "unknown" ]; then
-      echo "eic-shell latest version: \${latest_version} (installed version unknown)"
-    else
-      has_mods="no"
-      if check_local_modifications; then
-        has_mods="yes"
-      fi
-      display_update_notification "\${current_version}" "\${latest_version}" "\${has_mods}"
-    fi
-  else
-    echo "eic-shell update check failed (network unavailable). Current version: \${current_version}"
-  fi
-  exit 0
 fi
 
 if [ ! -z \${UPGRADE} ]; then
@@ -795,23 +748,24 @@ case ${OS} in
     ;;
 esac
 
-## create metadata file for version tracking
+## create metadata file for version tracking (curl runs async to avoid blocking)
 EIC_SHELL_MTIME=$(stat -c %Y "${PREFIX}/eic-shell" 2>/dev/null || stat -f %m "${PREFIX}/eic-shell" 2>/dev/null || echo 0)
-INSTALLED_VERSION=$(curl -s --connect-timeout 5 --max-time 5 \
-  "https://api.github.com/repos/eic/eic-shell/releases/latest" 2>/dev/null \
-  | grep '"tag_name":' \
-  | sed -E 's/.*"([^"]+)".*/\1/')
-if [[ ! "$INSTALLED_VERSION" =~ ^[0-9a-zA-Z._-]+$ ]]; then
-  INSTALLED_VERSION="unknown"
-fi
-{
-  echo "INSTALLED_VERSION=$INSTALLED_VERSION"
-  echo "INSTALLED_DATE=$(date +%s)"
-  echo "CONTAINER=$CONTAINER"
-  echo "ORGANIZATION=$ORGANIZATION"
-  echo "EIC_SHELL_ORIGINAL_MTIME=$EIC_SHELL_MTIME"
-} > "${PREFIX}/.eic-shell-metadata"
-echo " - Installed eic-shell version: $INSTALLED_VERSION"
+(
+  INSTALLED_VERSION=$(curl -s --connect-timeout 5 --max-time 5 \
+    "https://api.github.com/repos/eic/eic-shell/releases/latest" 2>/dev/null \
+    | grep '"tag_name":' \
+    | sed -E 's/.*"([^"]+)".*/\1/')
+  if [[ ! "$INSTALLED_VERSION" =~ ^[0-9a-zA-Z._-]+$ ]]; then
+    INSTALLED_VERSION="unknown"
+  fi
+  {
+    echo "INSTALLED_VERSION=$INSTALLED_VERSION"
+    echo "INSTALLED_DATE=$(date +%s)"
+    echo "CONTAINER=$CONTAINER"
+    echo "ORGANIZATION=$ORGANIZATION"
+    echo "EIC_SHELL_ORIGINAL_MTIME=$EIC_SHELL_MTIME"
+  } > "${PREFIX}/.eic-shell-metadata"
+) &
 
 popd
 echo "Environment setup successful"
