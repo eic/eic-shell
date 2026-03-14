@@ -814,5 +814,5 @@ fi
 echo " - Installed eic-shell version: $INSTALLED_VERSION"
 
 popd
-echo "Environment setup succesfull"
+echo "Environment setup successful"
 echo "You can start the development environment by running './eic-shell'"
