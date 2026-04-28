@@ -182,7 +182,7 @@ function install_singularity() {
   ## is always bound. We also check for the existence of a few standard
   ## locations (/scratch /volatile /cache) and bind those too if found
   echo " - Determining additional bind paths"
-  BINDPATH=${SINGULARITY_BINDPATH}
+  BINDPATH=${APPTAINER_BINDPATH:-${SINGULARITY_BINDPATH}}
   echo "   --> system bindpath: $BINDPATH"
   PREFIX_ROOT="/$(realpath $PREFIX | cut -d "/" -f2)"
   for dir in /w /work /media /scratch /volatile /cache /cvmfs /gpfs /gpfs01 /gpfs02 $PREFIX_ROOT; do
@@ -304,7 +304,12 @@ if [ ! -z \${UPGRADE} ]; then
 fi
 
 export EIC_SHELL_PREFIX=$PREFIX/local
-export SINGULARITY_BINDPATH=$BINDPATH
+if \${SINGULARITY:-$SINGULARITY} --version 2>&1 | grep -qi apptainer; then
+  export APPTAINER_BINDPATH=$BINDPATH
+  unset SINGULARITY_BINDPATH
+else
+  export SINGULARITY_BINDPATH=$BINDPATH
+fi
 \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell \$@
 EOF
 
