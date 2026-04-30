@@ -33,14 +33,14 @@ while [ $# -gt 0 ]; do
   key=$1
   case $key in
     -p|--prefix)
-      PREFIX=$(realpath $2)
+      PREFIX=$(realpath ${2?Missing argument. Use --help for more info.})
       shift
       shift
       ;;
     -t|--tmpdir)
-      export TMPDIR=$2
-      export APPTAINER_TMPDIR=$2
-      export SINGULARITY_TMPDIR=$2
+      export TMPDIR=${2?Missing argument. Use --help for more info.}
+      export APPTAINER_TMPDIR=${2?Missing argument. Use --help for more info.}
+      export SINGULARITY_TMPDIR=${2?Missing argument. Use --help for more info.}
       shift
       shift
       ;;
@@ -49,12 +49,12 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     -c|--container)
-      CONTAINER=$2
+      CONTAINER=${2?Missing argument. Use --help for more info.}
       shift
       shift
       ;;
     -v|--version)
-      VERSION=$2
+      VERSION=${2?Missing argument. Use --help for more info.}
       shift
       shift
       ;;
@@ -197,9 +197,9 @@ function install_singularity() {
   BINDPATH=$(echo ${SINGULARITY_BINDPATH},${APPTAINER_BINDPATH} | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
   echo "   --> system bindpath: $BINDPATH"
   PREFIX_ROOT="/$(realpath $PREFIX | cut -d "/" -f2)"
-  for dir in /w /work /scratch /volatile /cache /gpfs /gpfs01 /gpfs02 $PREFIX_ROOT; do
-    ## only add directories once
-    if [[ ${BINDPATH} =~ $(basename $dir) ]]; then
+  for dir in /w /work /media /scratch /volatile /cache /cvmfs /gpfs /gpfs01 /gpfs02 $PREFIX_ROOT; do
+    ## only add directories once (match full path entries in comma-separated BINDPATH)
+    if [[ ",$BINDPATH," == *,"$dir",* ]]; then
       continue
     fi
     if [ -d $dir ]; then
@@ -233,11 +233,17 @@ function print_the_help {
   echo ""
   echo "  Start the eic-shell containerized software environment (Apptainer/Singularity version)."
   echo ""
+  echo "ENVIRONMENT VARIABLES:"
+  echo "          SINGULARITY        Path to the singularity executable (D: detected during installation)"
+  echo "          SINGULARITY_OPTIONS  Additional options to pass to singularity exec (D: none)"
+  echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
   echo "  - Upgrade the container:      ./eic-shell --upgrade"
   echo "  - Use different version:      ./eic-shell --version \$(date +%y.%m).0-stable"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
+  echo "  - Use custom singularity:     SINGULARITY=/path/to/singularity ./eic-shell"
+  echo "  - Pass singularity options:   SINGULARITY_OPTIONS='--nv' ./eic-shell"
   echo ""
   exit
 }
@@ -256,13 +262,13 @@ while [ \$# -gt 0 ]; do
       shift
       ;;
     -c|--container)
-      CONTAINER=\$2
+      CONTAINER=\${2?Missing argument. Use --help for more info.}
       export SIF=/cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION}
       shift
       shift
       ;;
     -v|--version)
-      VERSION=\$2
+      VERSION=\${2?Missing argument. Use --help for more info.}
       export SIF=/cvmfs/singularity.opensciencegrid.org/\${ORGANIZATION}/\${CONTAINER}:\${VERSION}
       shift
       shift
