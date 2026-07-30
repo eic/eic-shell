@@ -1,4 +1,42 @@
 {
         "name": "eic-shell",
-        "image": "ghcr.io/eic/eic_xl:nightly",
+        "image": "ghcr.io/eic/eic_ci:nightly",
+        "features": {},
+        "containerEnv": {
+                "DISPLAY": ":1",
+                "EIC_SHELL_TEMPLATE": "true"
+        },
+        "runArgs": [
+                "--cap-add=SYS_PTRACE",
+                "--security-opt", "seccomp=unconfined"
+        ],
+        "forwardPorts": [8080, 8888, 3000],
+        "portsAttributes": {
+                "8888": {
+                        "label": "Jupyter Lab",
+                        "protocol": "http"
+                }
+        },
+        "customizations": {
+                "vscode": {
+                        "extensions": [
+                                "ms-vscode.cpptools",
+                                "ms-vscode.cmake-tools",
+                                "ms-python.python",
+                                "twxs.cmake",
+                                "ms-vscode.hexeditor",
+                                "ms-toolsai.jupyter"
+                        ],
+                        "settings": {
+                                "C_Cpp.default.cppStandard": "c++20",
+                                "C_Cpp.default.includePath": [
+                                        "/opt/local/include"
+                                ],
+                                "cmake.configureOnOpen": true,
+                                "python.defaultInterpreterPath": "/opt/local/bin/python"
+                        }
+                }
+        },
+        "postCreateCommand": "post-create.sh",
+        "shutdownAction": "stopContainer"
 }
