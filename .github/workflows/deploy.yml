@@ -22,6 +22,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Install Python dependencies
+        run: pip install jinja2
+
+      - name: Assemble standalone install.sh
+        run: python3 assemble.py . > install.sh.assembled && mv install.sh.assembled install.sh
+
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
