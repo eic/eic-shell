@@ -370,10 +370,14 @@ function print_the_help {
   echo ""
   echo "  Start the eic-shell containerized software environment (Docker version)."
   echo ""
+  echo "ENVIRONMENT VARIABLES:"
+  echo "          DOCKER_OPTIONS  Additional options to pass to docker run (D: none)"
+  echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
   echo "  - Upgrade the container:      ./eic-shell --upgrade"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
+  echo "  - Pass docker options:        DOCKER_OPTIONS='-p 127.0.0.1:9101:9101' ./eic-shell"
   echo ""
   exit
 }
@@ -431,7 +435,10 @@ EOF
       echo '  XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"' >> eic-shell
       echo 'fi' >> eic-shell
   fi
-  echo "docker run $PLATFORM_FLAG $MOUNT \$XSTUFF -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@" >> eic-shell
+  ## -it on a terminal; -i for piped stdin; none for captured output (-t adds CRLF, -i blocks)
+  echo 'STDIO=; [ -t 0 ] || STDIO=-i; [ -t 0 ] && [ -t 1 ] && STDIO=-it' >> eic-shell
+  ## one string: the entrypoint runs bash -c "$@"
+  echo "docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \${@:+\"\$*\"}" >> eic-shell
 
   chmod +x eic-shell
   echo " - Created custom eic-shell excecutable"
