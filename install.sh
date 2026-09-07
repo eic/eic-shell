@@ -437,8 +437,10 @@ EOF
   fi
   ## -it on a terminal; -i for piped stdin; none for captured output (-t adds CRLF, -i blocks)
   echo 'STDIO=; [ -t 0 ] || STDIO=-i; [ -t 0 ] && [ -t 1 ] && STDIO=-it' >> eic-shell
-  ## one string: the entrypoint runs bash -c "$@"
-  echo "docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \${@:+\"\$*\"}" >> eic-shell
+  ## the entrypoint runs bash -c "$@": one argument is the command string,
+  ## several are shell-quoted into one
+  echo 'CMD=; case $# in 0) ;; 1) CMD=$1 ;; *) CMD=$(printf "%q " "$@") ;; esac' >> eic-shell
+  echo "docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \${CMD:+\"\$CMD\"}" >> eic-shell
 
   chmod +x eic-shell
   echo " - Created custom eic-shell excecutable"
