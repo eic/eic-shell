@@ -303,6 +303,12 @@ if __name__ == "__main__":
         url = CONTAINER_URL.format(ref=version_gitlab, img=img, job=build_job)
         print('Downloading container from:', url)
         print('Destination:', container)
+
+        try:
+            os.mkdir(libdir)
+        except FileExistsError:
+            pass
+
         try:
             urllib.request.urlretrieve(url, container)
         except:
