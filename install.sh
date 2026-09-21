@@ -370,14 +370,10 @@ function print_the_help {
   echo ""
   echo "  Start the eic-shell containerized software environment (Docker version)."
   echo ""
-  echo "ENVIRONMENT VARIABLES:"
-  echo "          DOCKER_OPTIONS  Additional options to pass to docker run (D: none)"
-  echo ""
   echo "EXAMPLES: "
   echo "  - Start an interactive shell: ./eic-shell" 
   echo "  - Upgrade the container:      ./eic-shell --upgrade"
   echo "  - Execute a single command:   ./eic-shell -- <COMMAND>"
-  echo "  - Pass docker options:        DOCKER_OPTIONS='-p 127.0.0.1:9101:9101' ./eic-shell"
   echo ""
   exit
 }
