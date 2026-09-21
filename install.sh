@@ -412,7 +412,7 @@ while [ \$# -gt 0 ]; do
 done
 
 if [ x\${DISPLAY} == "x" ] ; then
-  echo "No X11 display detected, disabling X11"
+  echo "No X11 display detected, disabling X11" >&2
   NOX=1
 fi
 
@@ -427,10 +427,10 @@ EOF
   if [ `uname -s` = 'Darwin' ]; then
       echo 'if [ ! ${NOX} ]; then' >> eic-shell
       echo ' nolisten=`defaults find nolisten_tcp | grep nolisten | head -n 1 | awk ' "'{print" '$3}'"'" '|cut -b 1 `' >> eic-shell
-      echo ' [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)."' >> eic-shell
+      echo ' [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)." >&2' >> eic-shell
       ## getting the following single and double quotes, escapes and backticks right was a nightmare
       ## But with a heredoc it was worse
-      echo '  xhost +localhost' >> eic-shell
+      echo '  xhost +localhost >&2' >> eic-shell
       echo '  dispnum=`ps -e |grep Xquartz | grep listen | grep -v xinit |awk ' "'{print" '$5}'"'" '`' >> eic-shell
       echo '  XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"' >> eic-shell
       echo 'fi' >> eic-shell
