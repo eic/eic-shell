@@ -421,7 +421,7 @@ while [ \$# -gt 0 ]; do
 done
 
 if [ x\${DISPLAY} == "x" ] ; then
-  echo "No X11 display detected, disabling X11"
+  echo "No X11 display detected, disabling X11" >&2
   NOX=1
 fi
 
@@ -436,15 +436,20 @@ EOF
   if [ `uname -s` = 'Darwin' ]; then
       echo 'if [ ! ${NOX} ]; then' >> eic-shell
       echo ' nolisten=`defaults find nolisten_tcp | grep nolisten | head -n 1 | awk ' "'{print" '$3}'"'" '|cut -b 1 `' >> eic-shell
-      echo ' [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)."' >> eic-shell
+      echo ' [[ $nolisten -ne 0 ]] && echo "For X support: In XQuartz settings --> Security --> enable \"Allow connections from network clients\" and restart (should be only once)." >&2' >> eic-shell
       ## getting the following single and double quotes, escapes and backticks right was a nightmare
       ## But with a heredoc it was worse
-      echo '  xhost +localhost' >> eic-shell
+      echo '  xhost +localhost >&2' >> eic-shell
       echo '  dispnum=`ps -e |grep Xquartz | grep listen | grep -v xinit |awk ' "'{print" '$5}'"'" '`' >> eic-shell
       echo '  XSTUFF="-e DISPLAY=host.docker.internal${dispnum} -v /tmp/.X11-unix:/tmp/.X11-unix"' >> eic-shell
       echo 'fi' >> eic-shell
   fi
-  echo "docker run $PLATFORM_FLAG $MOUNT \$XSTUFF -w=$PWD -it --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \$@" >> eic-shell
+  ## -it on a terminal; -i for piped stdin; none for captured output (-t adds CRLF, -i blocks)
+  echo 'STDIO=; [ -t 0 ] || STDIO=-i; [ -t 0 ] && [ -t 1 ] && STDIO=-it' >> eic-shell
+  ## the entrypoint runs bash -c "$@": one argument is the command string,
+  ## several are shell-quoted into one
+  echo 'CMD=; case $# in 0) ;; 1) CMD=$1 ;; *) CMD=$(printf "%q " "$@") ;; esac' >> eic-shell
+  echo "docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \${CMD:+\"\$CMD\"}" >> eic-shell
 
   chmod +x eic-shell
   echo " - Created custom eic-shell excecutable"
