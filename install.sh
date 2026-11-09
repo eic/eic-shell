@@ -320,10 +320,13 @@ export APPTAINER_BINDPATH=$BINDPATH
 export SINGULARITY_BINDPATH=$BINDPATH
 ## the image runs bash -c "\$1": several arguments are shell-quoted into one
 CMD=; case \$# in 0) ;; 1) CMD=\$1 ;; *) CMD=\$(printf "%q " "\$@") ;; esac
-## already inside eic-shell: run the command here (a client config written
-## inside spawns this launcher for eic-mcp run, inside and outside alike)
-[ -e /etc/eic-env.sh ] && exec eic-shell \${CMD:+"\$CMD"}
-\${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell \${CMD:+"\$CMD"}
+## the image's eic-shell runs piped stdin as a script
+if [ \$# -gt 0 ]; then
+  [ -e /etc/eic-env.sh ] && exec bash --norc --noprofile -c ". /etc/eic-env.sh; \$CMD"
+  exec \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} bash --norc --noprofile -c ". /etc/eic-env.sh; \$CMD"
+fi
+[ -e /etc/eic-env.sh ] && exec eic-shell
+exec \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell
 EOF
 
   chmod +x eic-shell
@@ -454,8 +457,11 @@ EOF
   ## the entrypoint runs bash -c "$@": one argument is the command string,
   ## several are shell-quoted into one
   echo 'CMD=; case $# in 0) ;; 1) CMD=$1 ;; *) CMD=$(printf "%q " "$@") ;; esac' >> eic-shell
-  echo '[ -e /etc/eic-env.sh ] && exec eic-shell ${CMD:+"$CMD"}' >> eic-shell
-  echo "docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \${CMD:+\"\$CMD\"}" >> eic-shell
+  ## the image's eic-shell runs piped stdin as a script
+  echo 'RUN=eic-shell; [ $# -gt 0 ] && RUN="bash --norc --noprofile -c"' >> eic-shell
+  echo '[ $# -gt 0 ] && [ -e /etc/eic-env.sh ] && exec bash --norc --noprofile -c ". /etc/eic-env.sh; $CMD"' >> eic-shell
+  echo '[ -e /etc/eic-env.sh ] && exec eic-shell' >> eic-shell
+  echo "exec docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG \$RUN \${CMD:+\"\$CMD\"}" >> eic-shell
 
   chmod +x eic-shell
   echo " - Created custom eic-shell excecutable"
