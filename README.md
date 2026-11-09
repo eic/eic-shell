@@ -6,6 +6,25 @@ Running in browser
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/eic/eic-shell?quickstart=1)
 
+## Using as Template Repository
+
+**For EIC Software Developers**: This repository serves as a template for creating new EIC software projects with complete development environment support.
+
+### Quick Template Usage
+1. Click **"Use this template"** button above
+2. Create your new repository
+3. Open in GitHub Codespaces for instant EIC development environment
+4. Start coding with full physics software stack and GitHub Copilot support
+
+**Features included in template:**
+- Complete EIC physics software stack (Geant4, ROOT, DD4hep, Acts, Epic, EICrecon)
+- GitHub Copilot with EIC-specific context and development patterns
+- Jupyter Lab with data analysis tools (uproot, matplotlib, pandas)
+- Sample notebook for EIC data analysis from XRootD servers
+- One-click development in GitHub Codespaces
+
+See [Template Usage Guide](.github/TEMPLATE_USAGE.md) for detailed instructions on setting up derived repositories with this EIC development environment.
+
 Local Installation
 ------------------
 
