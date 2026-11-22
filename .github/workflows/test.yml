@@ -45,10 +45,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Install Apptainer
+      - name: Install Apptainer and squashfuse
         run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
           sudo apt-get update
-          sudo apt-get install -y apptainer
+          sudo apt-get install -y apptainer squashfuse
 
       - name: Build minimal test container and SIF
         run: |
