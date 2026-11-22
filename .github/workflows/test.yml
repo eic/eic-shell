@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # Run weekly on Sundays at 04:00 UTC against real eicweb/eic_xl image
+    - cron: '0 4 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -17,19 +20,11 @@ jobs:
 
       - name: Build minimal test container
         run: |
-          docker build -t local/test:latest - << 'EOF'
-          FROM ubuntu:24.04
-          RUN apt-get update && apt-get install -y --no-install-recommends bash coreutils grep && rm -rf /var/lib/apt/lists/*
-          RUN echo 'export EIC_ENV_LOADED=1' > /etc/eic-env.sh
-          RUN mkdir -p /opt/local/bin /opt/local/sbin
-          RUN printf '#!/usr/bin/env bash\n. /etc/eic-env.sh\nexec "$@"\n' > /opt/local/sbin/entrypoint.sh && chmod +x /opt/local/sbin/entrypoint.sh
-          RUN printf '#!/usr/bin/env bash\npiped_args=()\nif [ -p /dev/stdin ]; then while IFS= read line; do piped_args+=("${line}"); done; fi\n. /etc/eic-env.sh\nif [ "${#piped_args[@]}" != "0" ]; then printf "%%s\\n" "${piped_args[@]}" | bash -s -- --norc --noprofile; elif [ $# -gt 0 ]; then exec bash -c "$@"; else exec bash --norc --noprofile; fi\n' > /opt/local/bin/eic-shell && chmod +x /opt/local/bin/eic-shell
-          RUN ln -sf /opt/local/bin/eic-shell /usr/local/bin/eic-shell
-          ENV PATH=/opt/local/bin:$PATH
-          ENTRYPOINT ["/opt/local/sbin/entrypoint.sh"]
-          EOF
+          docker build -t local/test:latest -f tests/Dockerfile tests
 
       - name: Install eic-shell (Docker mode)
+        env:
+          EIC_SHELL_SKIP_PULL: 1
         run: |
           mkdir -p test-docker-env
           ./install.sh -o local -c test -v latest -p "$PWD/test-docker-env" -d
@@ -53,20 +48,9 @@ jobs:
 
       - name: Build minimal test container and SIF
         run: |
-          docker build -t local/test:latest - << 'EOF'
-          FROM ubuntu:24.04
-          RUN apt-get update && apt-get install -y --no-install-recommends bash coreutils grep && rm -rf /var/lib/apt/lists/*
-          RUN echo 'export EIC_ENV_LOADED=1' > /etc/eic-env.sh
-          RUN mkdir -p /opt/local/bin /opt/local/sbin
-          RUN printf '#!/usr/bin/env bash\n. /etc/eic-env.sh\nexec "$@"\n' > /opt/local/sbin/entrypoint.sh && chmod +x /opt/local/sbin/entrypoint.sh
-          RUN printf '#!/usr/bin/env bash\npiped_args=()\nif [ -p /dev/stdin ]; then while IFS= read line; do piped_args+=("${line}"); done; fi\n. /etc/eic-env.sh\nif [ "${#piped_args[@]}" != "0" ]; then printf "%%s\\n" "${piped_args[@]}" | bash -s -- --norc --noprofile; elif [ $# -gt 0 ]; then exec bash -c "$@"; else exec bash --norc --noprofile; fi\n' > /opt/local/bin/eic-shell && chmod +x /opt/local/bin/eic-shell
-          RUN ln -sf /opt/local/bin/eic-shell /usr/local/bin/eic-shell
-          ENV PATH=/opt/local/bin:$PATH
-          ENTRYPOINT ["/opt/local/sbin/entrypoint.sh"]
-          EOF
-
-          mkdir -p test-apptainer-env/local/lib
-          apptainer build test-apptainer-env/local/lib/test-latest.sif docker-daemon:local/test:latest
+          docker build -t local/test:latest -f tests/Dockerfile tests
+          mkdir -p test-apptainer-env/.gitlab-ci
+          apptainer build test-apptainer-env/.gitlab-ci/test-latest.sif docker-daemon:local/test:latest
 
       - name: Install eic-shell (Apptainer mode)
         run: |
@@ -75,3 +59,20 @@ jobs:
       - name: Run test suite against Apptainer launcher
         run: |
           tests/test_eic_shell.sh test-apptainer-env/eic-shell
+
+  test-real-image:
+    name: Test with real eicweb/eic_xl image
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install eic-shell (Docker mode)
+        run: |
+          mkdir -p test-real-env
+          ./install.sh -o eicweb -c eic_xl -v nightly -p "$PWD/test-real-env" -d
+
+      - name: Run test suite against Docker launcher
+        run: |
+          tests/test_eic_shell.sh test-real-env/eic-shell

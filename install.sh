@@ -173,8 +173,6 @@ function install_singularity() {
     ## check if we have an internal CI image we will use for testing purposes
     elif [ -f $PWD/.gitlab-ci/${CONTAINER}-${VERSION}.sif ]; then
       ln -sf $PWD/.gitlab-ci/${CONTAINER}-${VERSION}.sif ${SIF}
-    elif [ -f $SIF ]; then
-      echo " - Using existing image at $SIF"
     ## if not, download the container to the system
     else
       ## get the python installer and run the old-style install
@@ -334,6 +332,12 @@ export SINGULARITY_BINDPATH=$BINDPATH
 if [ \$# -eq 0 ]; then
   exec \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell
 else
+  ## In existing container images, /opt/local/bin/eic-shell executes 'exec bash -c "\$@"',
+  ## which drops trailing arguments for multi-argument commands (e.g. eic-shell -- cmake --build ...).
+  ## To maintain compatibility with existing and older images, we initialize the environment
+  ## (. /etc/eic-env.sh from eic/containers) and dispatch directly:
+  ## evaluate single-string commands via eval, or execute multi-token argument lists verbatim.
+  ## Note: keep in sync with containers/eic/eic-shell in eic/containers (see eic/containers#519).
   exec \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} bash --norc --noprofile -c '. /etc/eic-env.sh && if [ \$# -eq 1 ]; then eval "\$1"; else "\$@"; fi' -- "\$@"
 fi
 EOF
@@ -352,7 +356,11 @@ function install_docker() {
   echo " - Found docker at ${DOCKER}"
 
   IMG=${ORGANIZATION}/${CONTAINER}:${VERSION}
-  docker image inspect ${IMG} >/dev/null 2>&1 || docker pull ${IMG}
+  if [ -n "${EIC_SHELL_SKIP_PULL:-}" ] && docker image inspect ${IMG} >/dev/null 2>&1; then
+    echo " - Using existing image ${IMG}"
+  else
+    docker pull ${IMG}
+  fi
   echo " - Deployed ${CONTAINER} image: ${IMG}"
 
   ## We want to make sure the root directory of the install directory
@@ -466,6 +474,12 @@ EOF
   echo 'if [ $# -eq 0 ]; then' >> eic-shell
   echo "  exec docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell" >> eic-shell
   echo 'else' >> eic-shell
+  echo '  ## In existing container images, /opt/local/bin/eic-shell executes '\''exec bash -c "$@"\'\'',' >> eic-shell
+  echo '  ## which drops trailing arguments for multi-argument commands (e.g. eic-shell -- cmake --build ...).' >> eic-shell
+  echo '  ## To maintain compatibility with existing and older images, we initialize the environment' >> eic-shell
+  echo '  ## (. /etc/eic-env.sh from eic/containers) and dispatch directly:' >> eic-shell
+  echo '  ## evaluate single-string commands via eval, or execute multi-token argument lists verbatim.' >> eic-shell
+  echo '  ## Note: keep in sync with containers/eic/eic-shell in eic/containers (see eic/containers#519).' >> eic-shell
   echo "  exec docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG bash --norc --noprofile -c '. /etc/eic-env.sh && if [ \$# -eq 1 ]; then eval \"\$1\"; else \"\$@\"; fi' -- \"\$@\"" >> eic-shell
   echo 'fi' >> eic-shell
 
