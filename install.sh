@@ -11,6 +11,7 @@ ORGANIZATION="eicweb"
 CONTAINER="eic_xl"
 VERSION="nightly"
 PREFIX="$PWD"
+FORCE_DOCKER=false
 
 function print_the_help {
   echo "USAGE:  ./install.sh [-p PREFIX] [-v VERSION]"
@@ -21,6 +22,7 @@ function print_the_help {
   echo "          -o,--organization  Organization (D: $ORGANIZATION) (requires cvmfs)"
   echo "          -c,--container     Container family (D: $CONTAINER)"
   echo "          -v,--version       Version to install (D: $VERSION)"
+  echo "          -d,--docker        Force docker installation"
   echo "          -h,--help          Print this message"
   echo ""
   echo "  Set up containerized development environment."
@@ -48,6 +50,11 @@ while [ $# -gt 0 ]; do
       DISABLE_CVMFS_USAGE=true
       shift
       ;;
+    -o|--organization)
+      ORGANIZATION=${2?Missing argument. Use --help for more info.}
+      shift
+      shift
+      ;;
     -c|--container)
       CONTAINER=${2?Missing argument. Use --help for more info.}
       shift
@@ -56,6 +63,10 @@ while [ $# -gt 0 ]; do
     -v|--version)
       VERSION=${2?Missing argument. Use --help for more info.}
       shift
+      shift
+      ;;
+    -d|--docker)
+      FORCE_DOCKER=true
       shift
       ;;
     -h|--help)
@@ -162,6 +173,8 @@ function install_singularity() {
     ## check if we have an internal CI image we will use for testing purposes
     elif [ -f $PWD/.gitlab-ci/${CONTAINER}-${VERSION}.sif ]; then
       ln -sf $PWD/.gitlab-ci/${CONTAINER}-${VERSION}.sif ${SIF}
+    elif [ -f $SIF ]; then
+      echo " - Using existing image at $SIF"
     ## if not, download the container to the system
     else
       ## get the python installer and run the old-style install
@@ -318,7 +331,11 @@ fi
 export EIC_SHELL_PREFIX=$PREFIX/local
 export APPTAINER_BINDPATH=$BINDPATH
 export SINGULARITY_BINDPATH=$BINDPATH
-\${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell \$@
+if [ \$# -eq 0 ]; then
+  exec \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell
+else
+  exec \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} bash --norc --noprofile -c '. /etc/eic-env.sh && if [ \$# -eq 1 ]; then eval "\$1"; else "\$@"; fi' -- "\$@"
+fi
 EOF
 
   chmod +x eic-shell
@@ -334,8 +351,8 @@ function install_docker() {
   fi
   echo " - Found docker at ${DOCKER}"
 
-  IMG=eicweb/${CONTAINER}:${VERSION}
-  docker pull ${IMG}
+  IMG=${ORGANIZATION}/${CONTAINER}:${VERSION}
+  docker image inspect ${IMG} >/dev/null 2>&1 || docker pull ${IMG}
   echo " - Deployed ${CONTAINER} image: ${IMG}"
 
   ## We want to make sure the root directory of the install directory
@@ -446,10 +463,11 @@ EOF
   fi
   ## -it on a terminal; -i for piped stdin; none for captured output (-t adds CRLF, -i blocks)
   echo 'STDIO=; [ -t 0 ] || STDIO=-i; [ -t 0 ] && [ -t 1 ] && STDIO=-it' >> eic-shell
-  ## the entrypoint runs bash -c "$@": one argument is the command string,
-  ## several are shell-quoted into one
-  echo 'CMD=; case $# in 0) ;; 1) CMD=$1 ;; *) CMD=$(printf "%q " "$@") ;; esac' >> eic-shell
-  echo "docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \${CMD:+\"\$CMD\"}" >> eic-shell
+  echo 'if [ $# -eq 0 ]; then' >> eic-shell
+  echo "  exec docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell" >> eic-shell
+  echo 'else' >> eic-shell
+  echo "  exec docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG bash --norc --noprofile -c '. /etc/eic-env.sh && if [ \$# -eq 1 ]; then eval \"\$1\"; else \"\$@\"; fi' -- \"\$@\"" >> eic-shell
+  echo 'fi' >> eic-shell
 
   chmod +x eic-shell
   echo " - Created custom eic-shell excecutable"
@@ -462,7 +480,7 @@ case ${OS} in
   Linux)
     echo " - Detected OS: Linux"
     echo " - Detected CPU: $CPU"
-    if [ "$CPU" = "arm64" ]; then
+    if [ "$CPU" = "arm64" ] || [ "$FORCE_DOCKER" = "true" ]; then
       install_docker
     else
       install_singularity
