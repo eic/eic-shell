@@ -1,0 +1,78 @@
+name: Test eic-shell
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run weekly on Sundays at 04:00 UTC against real eicweb/eic_xl image
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+
+jobs:
+  test-docker:
+    name: Test with Docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Build minimal test container
+        run: |
+          docker build -t local/test:latest -f tests/Dockerfile tests
+
+      - name: Install eic-shell (Docker mode)
+        env:
+          EIC_SHELL_SKIP_PULL: 1
+        run: |
+          mkdir -p test-docker-env
+          ./install.sh -o local -c test -v latest -p "$PWD/test-docker-env" -d
+
+      - name: Run test suite against Docker launcher
+        run: |
+          tests/test_eic_shell.sh test-docker-env/eic-shell
+
+  test-apptainer:
+    name: Test with Apptainer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install Apptainer and squashfuse
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+          sudo apt-get update
+          sudo apt-get install -y apptainer squashfuse
+
+      - name: Build minimal test container and SIF
+        run: |
+          docker build -t local/test:latest -f tests/Dockerfile tests
+          mkdir -p test-apptainer-env/.gitlab-ci
+          apptainer build test-apptainer-env/.gitlab-ci/test-latest.sif docker-daemon:local/test:latest
+
+      - name: Install eic-shell (Apptainer mode)
+        run: |
+          ./install.sh -o local -c test -v latest -p "$PWD/test-apptainer-env" -n
+
+      - name: Run test suite against Apptainer launcher
+        run: |
+          tests/test_eic_shell.sh test-apptainer-env/eic-shell
+
+  test-real-image:
+    name: Test with real eicweb/eic_xl image
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install eic-shell (Docker mode)
+        run: |
+          mkdir -p test-real-env
+          ./install.sh -o eicweb -c eic_xl -v nightly -p "$PWD/test-real-env" -d
+
+      - name: Run test suite against Docker launcher
+        run: |
+          tests/test_eic_shell.sh test-real-env/eic-shell

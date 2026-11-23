@@ -11,6 +11,7 @@ ORGANIZATION="eicweb"
 CONTAINER="eic_xl"
 VERSION="nightly"
 PREFIX="$PWD"
+FORCE_DOCKER=false
 
 function print_the_help {
   echo "USAGE:  ./install.sh [-p PREFIX] [-v VERSION]"
@@ -21,6 +22,7 @@ function print_the_help {
   echo "          -o,--organization  Organization (D: $ORGANIZATION) (requires cvmfs)"
   echo "          -c,--container     Container family (D: $CONTAINER)"
   echo "          -v,--version       Version to install (D: $VERSION)"
+  echo "          -d,--docker        Force docker installation"
   echo "          -h,--help          Print this message"
   echo ""
   echo "  Set up containerized development environment."
@@ -48,6 +50,11 @@ while [ $# -gt 0 ]; do
       DISABLE_CVMFS_USAGE=true
       shift
       ;;
+    -o|--organization)
+      ORGANIZATION=${2?Missing argument. Use --help for more info.}
+      shift
+      shift
+      ;;
     -c|--container)
       CONTAINER=${2?Missing argument. Use --help for more info.}
       shift
@@ -56,6 +63,10 @@ while [ $# -gt 0 ]; do
     -v|--version)
       VERSION=${2?Missing argument. Use --help for more info.}
       shift
+      shift
+      ;;
+    -d|--docker)
+      FORCE_DOCKER=true
       shift
       ;;
     -h|--help)
@@ -318,7 +329,17 @@ fi
 export EIC_SHELL_PREFIX=$PREFIX/local
 export APPTAINER_BINDPATH=$BINDPATH
 export SINGULARITY_BINDPATH=$BINDPATH
-\${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell \$@
+if [ \$# -eq 0 ]; then
+  exec \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} eic-shell
+else
+  ## In existing container images, /opt/local/bin/eic-shell executes 'exec bash -c "\$@"',
+  ## which drops trailing arguments for multi-argument commands (e.g. eic-shell -- cmake --build ...).
+  ## To maintain compatibility with existing and older images, we initialize the environment
+  ## (. /etc/eic-env.sh from eic/containers) and dispatch directly:
+  ## evaluate single-string commands via eval, or execute multi-token argument lists verbatim.
+  ## Note: keep in sync with containers/eic/eic-shell in eic/containers (see eic/containers#519).
+  exec \${SINGULARITY:-$SINGULARITY} exec \${SINGULARITY_OPTIONS:-} \${SIF:-$SIF} bash --norc --noprofile -c '. /etc/eic-env.sh && if [ \$# -eq 1 ]; then eval "\$1"; else "\$@"; fi' -- "\$@"
+fi
 EOF
 
   chmod +x eic-shell
@@ -334,8 +355,12 @@ function install_docker() {
   fi
   echo " - Found docker at ${DOCKER}"
 
-  IMG=eicweb/${CONTAINER}:${VERSION}
-  docker pull ${IMG}
+  IMG=${ORGANIZATION}/${CONTAINER}:${VERSION}
+  if [ -n "${EIC_SHELL_SKIP_PULL:-}" ] && docker image inspect ${IMG} >/dev/null 2>&1; then
+    echo " - Using existing image ${IMG}"
+  else
+    docker pull ${IMG}
+  fi
   echo " - Deployed ${CONTAINER} image: ${IMG}"
 
   ## We want to make sure the root directory of the install directory
@@ -446,10 +471,17 @@ EOF
   fi
   ## -it on a terminal; -i for piped stdin; none for captured output (-t adds CRLF, -i blocks)
   echo 'STDIO=; [ -t 0 ] || STDIO=-i; [ -t 0 ] && [ -t 1 ] && STDIO=-it' >> eic-shell
-  ## the entrypoint runs bash -c "$@": one argument is the command string,
-  ## several are shell-quoted into one
-  echo 'CMD=; case $# in 0) ;; 1) CMD=$1 ;; *) CMD=$(printf "%q " "$@") ;; esac' >> eic-shell
-  echo "docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell \${CMD:+\"\$CMD\"}" >> eic-shell
+  echo 'if [ $# -eq 0 ]; then' >> eic-shell
+  echo "  exec docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG eic-shell" >> eic-shell
+  echo 'else' >> eic-shell
+  echo '  ## In existing container images, /opt/local/bin/eic-shell executes '\''exec bash -c "$@"\'\'',' >> eic-shell
+  echo '  ## which drops trailing arguments for multi-argument commands (e.g. eic-shell -- cmake --build ...).' >> eic-shell
+  echo '  ## To maintain compatibility with existing and older images, we initialize the environment' >> eic-shell
+  echo '  ## (. /etc/eic-env.sh from eic/containers) and dispatch directly:' >> eic-shell
+  echo '  ## evaluate single-string commands via eval, or execute multi-token argument lists verbatim.' >> eic-shell
+  echo '  ## Note: keep in sync with containers/eic/eic-shell in eic/containers (see eic/containers#519).' >> eic-shell
+  echo "  exec docker run $PLATFORM_FLAG \${DOCKER_OPTIONS:-} $MOUNT \$XSTUFF -w=$PWD \$STDIO --rm -e EIC_SHELL_PREFIX=$PREFIX/local $IMG bash --norc --noprofile -c '. /etc/eic-env.sh && if [ \$# -eq 1 ]; then eval \"\$1\"; else \"\$@\"; fi' -- \"\$@\"" >> eic-shell
+  echo 'fi' >> eic-shell
 
   chmod +x eic-shell
   echo " - Created custom eic-shell excecutable"
@@ -462,7 +494,7 @@ case ${OS} in
   Linux)
     echo " - Detected OS: Linux"
     echo " - Detected CPU: $CPU"
-    if [ "$CPU" = "arm64" ]; then
+    if [ "$CPU" = "arm64" ] || [ "$FORCE_DOCKER" = "true" ]; then
       install_docker
     else
       install_singularity
